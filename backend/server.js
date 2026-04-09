@@ -1,33 +1,27 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-
+import dotenv from "dotenv";
 import Case from "./models/Case.js";
+
+dotenv.config();
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 
-// ===============================
-// MongoDB Connection
-// ===============================
-mongoose
-  .connect("mongodb://127.0.0.1:27017/case_management")
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.log("MongoDB Error:", err));
-
-// ===============================
-// Routes
-// ===============================
-
-// Test Route
+// Root Route
 app.get("/", (req, res) => {
-  res.send("API Running...");
+  res.send("API is running...");
 });
 
-// Get All Cases
+// ✅ GET all cases
 app.get("/api/cases", async (req, res) => {
   try {
     const cases = await Case.find();
@@ -37,22 +31,25 @@ app.get("/api/cases", async (req, res) => {
   }
 });
 
-// Create New Case
+// ✅ CREATE new case
 app.post("/api/cases", async (req, res) => {
   try {
     const newCase = new Case(req.body);
-    const savedCase = await newCase.save();
-    res.status(201).json(savedCase);
+    await newCase.save();
+    res.status(201).json(newCase);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// ===============================
-// Server Start
-// ===============================
-const PORT = 5001;
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
+
+// Start Server
+const PORT = process.env.PORT || 5003;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} 🚀`);
+  console.log(`Server running on port ${PORT}`);
 });

@@ -2,12 +2,6 @@ import mongoose from "mongoose";
 
 const caseSchema = new mongoose.Schema(
   {
-    caseNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
     title: {
       type: String,
       required: true,
@@ -15,6 +9,7 @@ const caseSchema = new mongoose.Schema(
     },
     description: {
       type: String,
+      required: true,
       trim: true,
     },
     clientName: {
@@ -22,15 +17,22 @@ const caseSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    courtName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    hearingDate: {
+      type: Date,
+      required: true,
+    },
     status: {
       type: String,
-      enum: ["Open", "In Progress", "Closed"],
-      default: "Open",
+      enum: ["Pending", "Completed", "Adjourned"],
+      default: "Pending",
     },
   },
-  {
-    timestamps: true, // adds createdAt and updatedAt automatically
-  }
+  { timestamps: true }
 );
 
 const Case = mongoose.model("Case", caseSchema);
