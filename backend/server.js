@@ -1,55 +1,37 @@
+import dotenv from "dotenv";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
-import Case from "./models/Case.js";
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: "http://localhost:5173",
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// Root Route
+// Test routes
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("Server is running 🚀");
 });
 
-// ✅ GET all cases
-app.get("/api/cases", async (req, res) => {
-  try {
-    const cases = await Case.find();
-    res.json(cases);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
-// ✅ CREATE new case
-app.post("/api/cases", async (req, res) => {
-  try {
-    const newCase = new Case(req.body);
-    await newCase.save();
-    res.status(201).json(newCase);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+// IMPORTANT: Start server first
+const PORT = process.env.PORT || 10000;
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
-
-// Start Server
-const PORT = process.env.PORT || 5003;
-
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Then connect MongoDB
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB Connected Successfully");
+  })
+  .catch((err) => {
+    console.error("MongoDB Connection Failed:", err.message);
+  });
