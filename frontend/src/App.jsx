@@ -1,17 +1,10 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-    </Routes>
+    <div style={{ padding: "20px" }}>
+      <h1>Case Management Frontend Working ✅</h1>
+    </div>
   );
 }
 
