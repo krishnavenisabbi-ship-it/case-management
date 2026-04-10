@@ -1,7 +1,4 @@
-{"scripts": {
-  "dev": "nodemon server.js",
-  "start": "node server.js"
-}
+{
   "name": "backend",
   "version": "1.0.0",
   "type": "module",
