@@ -23,7 +23,7 @@ function Register() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5001/api/register",
+        "https://case-management-dkgs.onrender.com/api/cases",
         formData
       );
 
