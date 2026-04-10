@@ -22,10 +22,9 @@ function Login() {
 
     try {
       const res = await axios.post(
-        "https://case-management-dkgs.onrender.com/api/cases";
-        formData
-      );
-
+  "https://case-management-dkgs.onrender.com/api/login",
+  formData
+);
       localStorage.setItem("token", res.data.token);
 
       alert("Login Successful ✅");
