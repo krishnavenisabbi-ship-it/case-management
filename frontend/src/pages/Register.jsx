@@ -21,33 +21,37 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("Submitting form:", formData); // 👈 DEBUG
+
     try {
       const res = await axios.post(
-        "https://case-management-dkgs.onrender.com/api/cases",
-        formData
+        "https://case-management-dkgs.onrender.com/api/register",
+        {
+          email: formData.email,
+          password: formData.password,
+        }
       );
 
-      alert(res.data.message);
+      alert("Registered successfully ✅");
       navigate("/login");
 
     } catch (error) {
-      alert(error.response?.data?.message || "Registration failed");
+      console.error(error);
+      alert("Registration failed ❌");
     }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
+    <div style={{ padding: "20px" }}>
       <h2>Register</h2>
 
       <form onSubmit={handleSubmit}>
-
         <input
           type="text"
           name="name"
           placeholder="Name"
           value={formData.name}
           onChange={handleChange}
-          required
         />
         <br /><br />
 
@@ -72,7 +76,6 @@ function Register() {
         <br /><br />
 
         <button type="submit">Register</button>
-
       </form>
 
       <p>
