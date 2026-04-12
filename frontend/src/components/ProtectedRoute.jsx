@@ -23,10 +23,16 @@ export default function ProtectedRoute({ children }) {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
     fetch(`${backendUrl}/api/auth/me`, { credentials: "include" })
       .then((res) => {
+        if (res.status === 403) {
+          setIsAuth(false);
+          navigate("/login?blocked=true", { replace: true });
+          return null;
+        }
         if (!res.ok) throw new Error("Not authenticated");
         return res.json();
       })
       .then((u) => {
+        if (!u) return;
         setUser(u);
         setIsAuth(true);
       })

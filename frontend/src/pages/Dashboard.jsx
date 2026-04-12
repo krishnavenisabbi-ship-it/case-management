@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Plus, Search, Edit, Trash2, Link2,
-  Briefcase, Clock, CheckCircle, Bell, LogOut, X, ChevronDown
+  Briefcase, Clock, CheckCircle, Bell, LogOut, X, ChevronDown, ShieldCheck
 } from "lucide-react";
 import IndianLawLogo from "../components/IndianLawLogo.jsx";
 
@@ -294,6 +294,15 @@ export default function Dashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            {user && user.role === "admin" && (
+              <button
+                onClick={() => navigate("/admin")}
+                data-testid="admin-panel-btn"
+                className="flex items-center gap-2 px-4 py-2 bg-[#002FA7] text-white text-sm font-plex font-medium hover:bg-blue-800 transition-colors duration-150"
+              >
+                <ShieldCheck className="w-4 h-4" /> Admin
+              </button>
+            )}
             {user && (
               <div className="flex items-center gap-3">
                 {user.picture && (

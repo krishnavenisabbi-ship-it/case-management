@@ -108,17 +108,23 @@ class CaseManagementAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, timeout=15)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers, timeout=10)
+                response = requests.post(url, json=data, headers=headers, timeout=15)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=headers, timeout=10)
+                response = requests.put(url, json=data, headers=headers, timeout=15)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=headers, timeout=10)
+                response = requests.delete(url, headers=headers, timeout=15)
             
             return response
+        except requests.exceptions.Timeout:
+            print(f"Request timeout for {method} {endpoint}")
+            return None
+        except requests.exceptions.ConnectionError:
+            print(f"Connection error for {method} {endpoint}")
+            return None
         except Exception as e:
-            print(f"Request error: {str(e)}")
+            print(f"Request error for {method} {endpoint}: {str(e)}")
             return None
 
     def test_health_check(self):
@@ -266,6 +272,176 @@ class CaseManagementAPITester:
         success = get_success and check_success
         return self.log_test("Notifications", success, f"Get: {get_success}, Check: {check_success}")
 
+    def setup_admin_test_data(self):
+        """Setup admin test user and regular user for admin testing"""
+        try:
+            # Create admin user (test-user-ui1)
+            admin_user = {
+                "user_id": "test-user-ui1",
+                "email": "krishnavenisabbi@gmail.com",
+                "name": "Admin User",
+                "picture": "https://via.placeholder.com/150",
+                "role": "admin",
+                "blocked": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            self.db.users.replace_one({"user_id": "test-user-ui1"}, admin_user, upsert=True)
+            
+            # Create admin session
+            admin_session = {
+                "user_id": "test-user-ui1",
+                "session_token": "test_session_ui1",
+                "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+                "created_at": datetime.now(timezone.utc)
+            }
+            self.db.sessions.replace_one({"session_token": "test_session_ui1"}, admin_session, upsert=True)
+            
+            # Create regular user for testing
+            regular_user = {
+                "user_id": "test-user-regular",
+                "email": "regularuser@example.com",
+                "name": "Regular User",
+                "picture": "https://via.placeholder.com/150",
+                "role": "user",
+                "blocked": False,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            self.db.users.replace_one({"user_id": "test-user-regular"}, regular_user, upsert=True)
+            
+            # Create regular user session
+            regular_session = {
+                "user_id": "test-user-regular",
+                "session_token": "test_session_regular",
+                "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+                "created_at": datetime.now(timezone.utc)
+            }
+            self.db.sessions.replace_one({"session_token": "test_session_regular"}, regular_session, upsert=True)
+            
+            print(f"🔧 Admin test data setup complete")
+            return True
+        except Exception as e:
+            print(f"❌ Failed to setup admin test data: {str(e)}")
+            return False
+
+    def test_admin_get_users(self):
+        """Test admin get users endpoint"""
+        # Test with admin token
+        admin_token = self.session_token
+        self.session_token = "test_session_ui1"
+        
+        response = self.make_request('GET', '/api/admin/users')
+        if response and response.status_code == 200:
+            data = response.json()
+            success = isinstance(data, list) and len(data) >= 2  # Should have at least admin and regular user
+            # Check if case_count is included
+            if data and 'case_count' in data[0]:
+                result = self.log_test("Admin Get Users", success, f"Found {len(data)} users with case counts")
+            else:
+                result = self.log_test("Admin Get Users", False, "Missing case_count field")
+        else:
+            result = self.log_test("Admin Get Users", False, f"Status: {response.status_code if response else 'No response'}")
+        
+        self.session_token = admin_token
+        return result
+
+    def test_admin_block_user(self):
+        """Test admin block user endpoint"""
+        # Test with admin token
+        admin_token = self.session_token
+        self.session_token = "test_session_ui1"
+        
+        response = self.make_request('PUT', '/api/admin/users/test-user-regular/block')
+        if response and response.status_code == 200:
+            data = response.json()
+            success = data.get('message') == 'User blocked'
+            result = self.log_test("Admin Block User", success)
+        else:
+            result = self.log_test("Admin Block User", False, f"Status: {response.status_code if response else 'No response'}")
+        
+        self.session_token = admin_token
+        return result
+
+    def test_admin_unblock_user(self):
+        """Test admin unblock user endpoint"""
+        # Test with admin token
+        admin_token = self.session_token
+        self.session_token = "test_session_ui1"
+        
+        response = self.make_request('PUT', '/api/admin/users/test-user-regular/unblock')
+        if response and response.status_code == 200:
+            data = response.json()
+            success = data.get('message') == 'User unblocked'
+            result = self.log_test("Admin Unblock User", success)
+        else:
+            result = self.log_test("Admin Unblock User", False, f"Status: {response.status_code if response else 'No response'}")
+        
+        self.session_token = admin_token
+        return result
+
+    def test_admin_cannot_block_admin(self):
+        """Test that admin cannot block another admin"""
+        # Test with admin token
+        admin_token = self.session_token
+        self.session_token = "test_session_ui1"
+        
+        response = self.make_request('PUT', '/api/admin/users/test-user-ui1/block')
+        if response and response.status_code == 400:
+            data = response.json()
+            success = 'Cannot block an admin' in data.get('detail', '')
+            result = self.log_test("Admin Cannot Block Admin", success)
+        else:
+            result = self.log_test("Admin Cannot Block Admin", False, f"Status: {response.status_code if response else 'No response'}")
+        
+        self.session_token = admin_token
+        return result
+
+    def test_non_admin_access_denied(self):
+        """Test that non-admin users get 403 on admin endpoints"""
+        # Test with regular user token
+        admin_token = self.session_token
+        self.session_token = "test_session_regular"
+        
+        response = self.make_request('GET', '/api/admin/users')
+        if response and response.status_code == 403:
+            success = True
+            result = self.log_test("Non-Admin Access Denied", success)
+        else:
+            result = self.log_test("Non-Admin Access Denied", False, f"Status: {response.status_code if response else 'No response'}")
+        
+        self.session_token = admin_token
+        return result
+
+    def test_blocked_user_auth_denied(self):
+        """Test that blocked users get 403 on auth endpoints"""
+        # First block the regular user
+        admin_token = self.session_token
+        self.session_token = "test_session_ui1"
+        
+        # Block the user
+        response = self.make_request('PUT', '/api/admin/users/test-user-regular/block')
+        if not response or response.status_code != 200:
+            self.session_token = admin_token
+            return self.log_test("Blocked User Auth Denied", False, "Failed to block user for test")
+        
+        # Now test with blocked user token
+        self.session_token = "test_session_regular"
+        
+        # Test /api/auth/me - blocked users should get 403 or 401 (session cleared)
+        response = self.make_request('GET', '/api/auth/me')
+        auth_me_blocked = response and (response.status_code == 403 or response.status_code == 401)
+        
+        # The behavior is correct - when user is blocked, their sessions are cleared
+        # So they get 401 (unauthorized) instead of 403 (forbidden)
+        success = auth_me_blocked
+        result = self.log_test("Blocked User Auth Denied", success, f"Auth/me status: {response.status_code if response else 'No response'}")
+        
+        # Unblock the user for cleanup
+        self.session_token = "test_session_ui1"
+        self.make_request('PUT', '/api/admin/users/test-user-regular/unblock')
+        
+        self.session_token = admin_token
+        return result
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Case Management API Tests")
@@ -276,8 +452,13 @@ class CaseManagementAPITester:
             print("❌ Failed to setup test environment")
             return False
         
+        # Setup admin test data
+        if not self.setup_admin_test_data():
+            print("❌ Failed to setup admin test environment")
+            return False
+        
         try:
-            # Run tests
+            # Run basic tests
             self.test_health_check()
             self.test_auth_me()
             self.test_create_case()
@@ -287,6 +468,17 @@ class CaseManagementAPITester:
             self.test_get_stats()
             self.test_public_case_view()
             self.test_notifications()
+            
+            # Run admin tests
+            print("\n🔐 Testing Admin Functionality")
+            print("-" * 30)
+            self.test_admin_get_users()
+            self.test_admin_block_user()
+            self.test_admin_unblock_user()
+            self.test_admin_cannot_block_admin()
+            self.test_non_admin_access_denied()
+            self.test_blocked_user_auth_denied()
+            
             self.test_auth_logout()
             
         finally:

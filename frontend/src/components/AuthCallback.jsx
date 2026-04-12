@@ -28,10 +28,17 @@ export default function AuthCallback() {
       body: JSON.stringify({ session_id: sessionId }),
     })
       .then((res) => {
+        if (res.status === 403) {
+          // User is blocked
+          window.history.replaceState(null, "", window.location.pathname);
+          navigate("/login?blocked=true", { replace: true });
+          return null;
+        }
         if (!res.ok) throw new Error("Auth failed");
         return res.json();
       })
       .then((user) => {
+        if (!user) return;
         // Clear hash and navigate to dashboard
         window.history.replaceState(null, "", window.location.pathname);
         navigate("/dashboard", { replace: true, state: { user } });

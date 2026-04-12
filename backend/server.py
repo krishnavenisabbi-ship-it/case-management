@@ -56,6 +56,8 @@ class CaseUpdate(BaseModel):
     client_email: Optional[str] = None
     client_phone: Optional[str] = None
 
+ADMIN_EMAIL = "krishnavenisabbi@gmail.com"
+
 # --- Auth Helpers ---
 def get_session_token(request: Request) -> str:
     token = request.cookies.get("session_token")
@@ -82,6 +84,14 @@ def get_current_user(request: Request) -> dict:
     user = users_col.find_one({"user_id": session["user_id"]}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if user.get("blocked"):
+        raise HTTPException(status_code=403, detail="Your access has been restricted. Please contact the administrator.")
+    return user
+
+def get_admin_user(request: Request) -> dict:
+    user = get_current_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
 # --- Health ---
@@ -114,13 +124,20 @@ async def exchange_session(request: Request, response: Response):
         users_col.update_one({"email": email}, {"$set": {"name": name, "picture": picture}})
     else:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
+        role = "admin" if email == ADMIN_EMAIL else "user"
         users_col.insert_one({
             "user_id": user_id,
             "email": email,
             "name": name,
             "picture": picture,
+            "role": role,
+            "blocked": False,
             "created_at": datetime.now(timezone.utc).isoformat()
         })
+    # Check if user is blocked
+    user_check = users_col.find_one({"user_id": user_id}, {"_id": 0})
+    if user_check and user_check.get("blocked"):
+        raise HTTPException(status_code=403, detail="Your access has been restricted. Please contact the administrator.")
     sessions_col.insert_one({
         "user_id": user_id,
         "session_token": session_token,
@@ -142,6 +159,12 @@ async def exchange_session(request: Request, response: Response):
 @app.get("/api/auth/me")
 def auth_me(request: Request):
     user = get_current_user(request)
+    # Ensure role field exists for older users
+    if "role" not in user:
+        role = "admin" if user.get("email") == ADMIN_EMAIL else "user"
+        users_col.update_one({"user_id": user["user_id"]}, {"$set": {"role": role, "blocked": False}})
+        user["role"] = role
+        user["blocked"] = False
     return user
 
 @app.post("/api/auth/logout")
@@ -275,3 +298,36 @@ def get_stats(request: Request):
         "closed_cases": closed_cases,
         "upcoming_adjournments": upcoming
     }
+
+
+# --- Admin Routes ---
+@app.get("/api/admin/users")
+def admin_get_users(request: Request):
+    admin = get_admin_user(request)
+    users = list(users_col.find({}, {"_id": 0}).sort("created_at", -1))
+    # Add case count for each user
+    for u in users:
+        u["case_count"] = cases_col.count_documents({"user_id": u["user_id"]})
+    return users
+
+@app.put("/api/admin/users/{user_id}/block")
+def admin_block_user(user_id: str, request: Request):
+    admin = get_admin_user(request)
+    target = users_col.find_one({"user_id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.get("role") == "admin":
+        raise HTTPException(status_code=400, detail="Cannot block an admin")
+    users_col.update_one({"user_id": user_id}, {"$set": {"blocked": True}})
+    # Also clear their sessions so they're logged out immediately
+    sessions_col.delete_many({"user_id": user_id})
+    return {"message": "User blocked", "user_id": user_id}
+
+@app.put("/api/admin/users/{user_id}/unblock")
+def admin_unblock_user(user_id: str, request: Request):
+    admin = get_admin_user(request)
+    target = users_col.find_one({"user_id": user_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    users_col.update_one({"user_id": user_id}, {"$set": {"blocked": False}})
+    return {"message": "User unblocked", "user_id": user_id}

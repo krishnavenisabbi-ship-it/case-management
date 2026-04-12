@@ -1,9 +1,11 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import IndianLawLogo from "../components/IndianLawLogo.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [blocked, setBlocked] = useState(searchParams.get("blocked") === "true");
 
   useEffect(() => {
     // Check if already authenticated
@@ -60,6 +62,18 @@ export default function Login() {
               Sign in to manage your cases and track proceedings
             </p>
           </div>
+
+          {/* Blocked Message */}
+          {blocked && (
+            <div className="mb-6 p-4 border-2 border-red-600 bg-red-50" data-testid="blocked-message">
+              <p className="font-plex text-sm font-semibold text-red-700">
+                Your access has been restricted.
+              </p>
+              <p className="font-plex text-xs text-red-600 mt-1">
+                Please contact the administrator for assistance.
+              </p>
+            </div>
+          )}
 
           {/* Google SSO Button */}
           <button

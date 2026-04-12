@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import PublicCaseView from "./pages/PublicCaseView.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
 import AuthCallback from "./components/AuthCallback.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
@@ -24,6 +25,14 @@ function AppRouter() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
           </ProtectedRoute>
         }
       />
