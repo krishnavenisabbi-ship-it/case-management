@@ -24,25 +24,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex" data-testid="login-page">
-      {/* Left - Hero Image */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-black">
-        <img
-          src="https://images.unsplash.com/photo-1643149005402-ecac920f1d5e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwxfHxjb3VydGhvdXNlJTIwYXJjaGl0ZWN0dXJlJTIwbWluaW1hbGlzdHxlbnwwfHx8fDE3NzU5Njk5MjR8MA&ixlib=rb-4.1.0&q=85"
-          alt="Courthouse"
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="absolute bottom-12 left-12 right-12">
-          <p className="font-outfit text-white/80 text-sm uppercase tracking-[0.3em] mb-3">
-            Legal Practice Management
-          </p>
-          <h2 className="font-outfit text-white text-3xl font-bold leading-tight">
-            Organize. Track.<br />Win Cases.
-          </h2>
-        </div>
-      </div>
-
-      {/* Right - Login Form */}
+      {/* Login Form - Centered */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-white">
         <div className="w-full max-w-md">
           {/* Logo */}
