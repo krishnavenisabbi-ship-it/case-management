@@ -286,8 +286,8 @@ export default function Dashboard() {
       <header className="border-b border-black bg-white sticky top-0 z-40" data-testid="dashboard-header">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black flex items-center justify-center">
-              <IndianLawLogo size={24} className="text-white" />
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/kc4drf9a_image.png" alt="Law Logo" className="w-10 h-10 object-contain" />
             </div>
             <h1 className="font-outfit text-lg font-black tracking-tight hidden sm:block" data-testid="dashboard-title">
               CASE MANAGEMENT SYSTEM

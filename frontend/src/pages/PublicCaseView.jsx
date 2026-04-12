@@ -61,8 +61,8 @@ export default function PublicCaseView() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 bg-black flex items-center justify-center">
-            <IndianLawLogo size={24} className="text-white" />
+          <div className="w-10 h-10 flex items-center justify-center">
+            <img src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/kc4drf9a_image.png" alt="Law Logo" className="w-10 h-10 object-contain" />
           </div>
           <span className="font-outfit text-sm font-bold tracking-tight">CASE MANAGEMENT SYSTEM</span>
         </div>

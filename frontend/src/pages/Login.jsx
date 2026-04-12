@@ -47,8 +47,8 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-16">
-            <div className="w-12 h-12 bg-black flex items-center justify-center">
-              <IndianLawLogo size={28} className="text-white" />
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/kc4drf9a_image.png" alt="Law Logo" className="w-12 h-12 object-contain" />
             </div>
             <div>
               <h1 className="font-outfit text-xl font-black tracking-tight leading-none" data-testid="app-title">
