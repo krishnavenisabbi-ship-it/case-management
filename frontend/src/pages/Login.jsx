@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Scale } from "lucide-react";
+import IndianLawLogo from "../components/IndianLawLogo.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -47,8 +47,8 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 bg-black flex items-center justify-center">
-              <Scale className="w-5 h-5 text-white" />
+            <div className="w-12 h-12 bg-black flex items-center justify-center">
+              <IndianLawLogo size={28} className="text-white" />
             </div>
             <div>
               <h1 className="font-outfit text-xl font-black tracking-tight leading-none" data-testid="app-title">

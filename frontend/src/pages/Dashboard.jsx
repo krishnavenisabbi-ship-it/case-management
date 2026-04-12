@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Scale, Plus, Search, Edit, Trash2, Link2,
+  Plus, Search, Edit, Trash2, Link2,
   Briefcase, Clock, CheckCircle, Bell, LogOut, X, ChevronDown
 } from "lucide-react";
+import IndianLawLogo from "../components/IndianLawLogo.jsx";
 
 const API = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -285,8 +286,8 @@ export default function Dashboard() {
       <header className="border-b border-black bg-white sticky top-0 z-40" data-testid="dashboard-header">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-black flex items-center justify-center">
-              <Scale className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-black flex items-center justify-center">
+              <IndianLawLogo size={24} className="text-white" />
             </div>
             <h1 className="font-outfit text-lg font-black tracking-tight hidden sm:block" data-testid="dashboard-title">
               CASE MANAGEMENT SYSTEM

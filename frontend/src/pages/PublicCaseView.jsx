@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Scale, Calendar, MapPin, Building, Users, FileText } from "lucide-react";
+import IndianLawLogo from "../components/IndianLawLogo.jsx";
 
 const API = import.meta.env.VITE_BACKEND_URL || "";
 
@@ -60,8 +61,8 @@ export default function PublicCaseView() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 bg-black flex items-center justify-center">
-            <Scale className="w-4 h-4 text-white" />
+          <div className="w-10 h-10 bg-black flex items-center justify-center">
+            <IndianLawLogo size={24} className="text-white" />
           </div>
           <span className="font-outfit text-sm font-bold tracking-tight">CASE MANAGEMENT SYSTEM</span>
         </div>
