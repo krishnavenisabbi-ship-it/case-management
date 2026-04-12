@@ -1,0 +1,89 @@
+{
+  "project_setup": {
+    "theme": "light",
+    "archetype": "Archetype 4 (Swiss & High-Contrast)",
+    "description": "A high-contrast, brutalist-inspired Swiss design emphasizing authority, precision, and clarity. Sharp edges, strict grids, and stark color contrasts to make legal data highly legible and 'cool/technical'.",
+    "file_extension_note": "Use .js and .jsx files for React components, not .tsx."
+  },
+  "colors": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "surface_public_document": "#F5F5F0",
+    "primary": "#000000",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#FFFFFF",
+    "secondary_foreground": "#000000",
+    "accent_blue": "#002FA7",
+    "warning_yellow": "#FFD700",
+    "border_structural": "#000000",
+    "border_subtle": "#E5E7EB",
+    "text_primary": "#000000",
+    "text_secondary": "#4B5563"
+  },
+  "typography": {
+    "heading_font": "Outfit",
+    "body_font": "IBM Plex Sans",
+    "mono_font": "IBM Plex Mono",
+    "serif_font": "Playfair Display",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl font-black tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "body": "text-base font-normal leading-relaxed",
+      "small": "text-sm font-medium",
+      "labels": "text-xs font-bold uppercase tracking-[0.2em]"
+    }
+  },
+  "spacing_and_layout": {
+    "global_spacing": "Generous outer padding (p-8 or p-12), dense internal padding for data (p-2, p-4)",
+    "border_radius": "rounded-none",
+    "grid_system": "The 'Control Room' Grid for dashboard widgets (tight gap-4/6). Border-collapse technical style for layout sections.",
+    "alignment": "Strict left-alignment for all data, right-alignment for dates and numbers."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-black text-white hover:bg-black/90 rounded-none px-6 py-2 font-medium transition-colors",
+      "secondary": "bg-white text-black border border-black hover:bg-gray-100 rounded-none px-6 py-2 transition-colors",
+      "accent": "bg-[#002FA7] text-white hover:bg-blue-800 rounded-none px-6 py-2"
+    },
+    "cards": {
+      "dashboard_widget": "bg-white border border-black p-6 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all",
+      "public_document": "bg-[#F5F5F0] border border-[#D1D5DB] p-12 max-w-4xl mx-auto shadow-lg"
+    },
+    "table": {
+      "style": "Dense, cardless. border-collapse. th: bg-gray-50 border-y border-black font-semibold text-black uppercase tracking-wider text-xs. td: border-b border-gray-200 py-3 px-4 text-sm. Hover: bg-gray-50.",
+      "special_columns": "Case Number uses IBM Plex Mono. Dates right-aligned."
+    },
+    "badges": {
+      "opened": "bg-[#002FA7] text-white px-2 py-1 text-xs font-bold uppercase tracking-wider rounded-none",
+      "closed": "bg-black text-white px-2 py-1 text-xs font-bold uppercase tracking-wider rounded-none",
+      "adjourned": "bg-[#FFD700] text-black px-2 py-1 text-xs font-bold uppercase tracking-wider rounded-none border border-black"
+    },
+    "inputs": {
+      "style": "border border-black bg-white px-3 py-2 text-sm rounded-none focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+    }
+  },
+  "icons_and_media": {
+    "icon_library": "lucide-react",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1643149005402-ecac920f1d5e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwxfHxjb3VydGhvdXNlJTIwYXJjaGl0ZWN0dXJlJTIwbWluaW1hbGlzdHxlbnwwfHx8fDE3NzU5Njk5MjR8MA&ixlib=rb-4.1.0&q=85",
+        "category": "login_hero",
+        "description": "Minimalist brutalist courthouse architecture for the login page split-screen background."
+      }
+    ]
+  },
+  "motion": {
+    "hover": "Hard, crisp transitions. 150ms ease-in-out.",
+    "modals": "Slide-in from right for forms (Shadcn Sheet) to feel like opening a drawer in a filing cabinet."
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure minimum 4.5:1 for text. Hover states explicitly define text colors.",
+    "testing": "All interactive elements MUST include data-testid attribute (e.g., data-testid='login-google-btn', data-testid='add-case-btn')."
+  },
+  "pages_instructions": {
+    "login": "Split screen layout. Left side: The architectural image, absolute fill, with a subtle black/20 overlay. Right side: Centered login form, minimal. 'CASE MANAGEMENT SYSTEM' in huge Outfit font. Google SSO button prominent with a Google icon and sharp black border.",
+    "dashboard": "Sidebar for navigation (Cases, Settings). Top header for user profile. Main area has a summary row (Active Cases, Upcoming Adjournments). Below is the main Case Data Table. Top right of table area has 'Add Case' button (opens Shadcn Sheet). Table rows have a Shadcn DropdownMenu for Edit/Delete/Copy Public Link actions.",
+    "public_case_view": "Accessed via a public route. A read-only, beautifully typeset page using Playfair Display for headers and a warm off-white background (#F5F5F0) to resemble a premium legal document. Shows case details, current status, and adjournment dates clearly."
+  }
+}
