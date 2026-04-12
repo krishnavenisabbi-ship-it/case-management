@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Scale, Plus, Search, MoreVertical, Edit, Trash2, Link2,
+  Scale, Plus, Search, Edit, Trash2, Link2,
   Briefcase, Clock, CheckCircle, Bell, LogOut, X, ChevronDown
 } from "lucide-react";
 
@@ -145,41 +145,33 @@ function CaseModal({ isOpen, onClose, onSubmit, editData }) {
   );
 }
 
-function DropdownMenu({ caseItem, onEdit, onDelete, onCopyLink }) {
-  const [open, setOpen] = useState(false);
+function ActionButtons({ caseItem, onEdit, onDelete, onCopyLink }) {
   return (
-    <div className="relative">
-      <button onClick={() => setOpen(!open)} className="p-1.5 hover:bg-gray-100 transition-colors" data-testid={`actions-btn-${caseItem.case_id}`}>
-        <MoreVertical className="w-4 h-4" />
+    <div className="flex items-center gap-1 justify-end">
+      <button
+        onClick={() => onEdit(caseItem)}
+        data-testid={`edit-btn-${caseItem.case_id}`}
+        title="Edit Case"
+        className="p-2 hover:bg-gray-100 transition-colors border border-transparent hover:border-black"
+      >
+        <Edit className="w-4 h-4" />
       </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] z-40">
-            <button
-              onClick={() => { onEdit(caseItem); setOpen(false); }}
-              data-testid={`edit-btn-${caseItem.case_id}`}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-plex hover:bg-gray-50 transition-colors text-left"
-            >
-              <Edit className="w-4 h-4" /> Edit Case
-            </button>
-            <button
-              onClick={() => { onCopyLink(caseItem); setOpen(false); }}
-              data-testid={`share-btn-${caseItem.case_id}`}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-plex hover:bg-gray-50 transition-colors text-left"
-            >
-              <Link2 className="w-4 h-4" /> Copy Public Link
-            </button>
-            <button
-              onClick={() => { onDelete(caseItem.case_id); setOpen(false); }}
-              data-testid={`delete-btn-${caseItem.case_id}`}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-plex hover:bg-gray-50 text-red-600 transition-colors text-left"
-            >
-              <Trash2 className="w-4 h-4" /> Delete Case
-            </button>
-          </div>
-        </>
-      )}
+      <button
+        onClick={() => onCopyLink(caseItem)}
+        data-testid={`share-btn-${caseItem.case_id}`}
+        title="Copy Public Link"
+        className="p-2 hover:bg-gray-100 transition-colors border border-transparent hover:border-black"
+      >
+        <Link2 className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => onDelete(caseItem.case_id)}
+        data-testid={`delete-btn-${caseItem.case_id}`}
+        title="Delete Case"
+        className="p-2 hover:bg-red-50 text-red-600 transition-colors border border-transparent hover:border-red-600"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   );
 }
@@ -391,7 +383,7 @@ export default function Dashboard() {
                     <td className="px-4 py-3 text-sm font-plex">{c.step}</td>
                     <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
                     <td className="px-4 py-3 text-right">
-                      <DropdownMenu
+                      <ActionButtons
                         caseItem={c}
                         onEdit={(item) => { setEditData(item); setModalOpen(true); }}
                         onDelete={handleDelete}

@@ -7,17 +7,23 @@ from pymongo import MongoClient
 import os
 
 class CaseManagementAPITester:
-    def __init__(self):
+    def __init__(self, use_existing_session=False):
         self.base_url = "https://245338f4-e8c3-4094-99d9-9a96ef5fa0fc.preview.emergentagent.com"
         self.session_token = None
         self.user_id = None
         self.test_case_id = None
         self.tests_run = 0
         self.tests_passed = 0
+        self.use_existing_session = use_existing_session
         
         # MongoDB connection for test data setup
         self.mongo_client = MongoClient("mongodb://localhost:27017")
         self.db = self.mongo_client["case_management"]
+        
+        # Use existing test session if specified
+        if use_existing_session:
+            self.session_token = "test_session_ui1"
+            self.user_id = "test-user-ui1"
 
     def log_test(self, name, success, details=""):
         """Log test results"""
@@ -30,40 +36,58 @@ class CaseManagementAPITester:
         return success
 
     def setup_test_user(self):
-        """Create test user and session in MongoDB"""
-        try:
-            timestamp = int(datetime.now().timestamp())
-            self.user_id = f"test-user-{timestamp}"
-            self.session_token = f"test_session_{timestamp}"
-            
-            # Create test user
-            user_doc = {
-                "user_id": self.user_id,
-                "email": f"test.user.{timestamp}@example.com",
-                "name": "Test User",
-                "picture": "https://via.placeholder.com/150",
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            self.db.users.insert_one(user_doc)
-            
-            # Create test session
-            session_doc = {
-                "user_id": self.user_id,
-                "session_token": self.session_token,
-                "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
-                "created_at": datetime.now(timezone.utc)
-            }
-            self.db.sessions.insert_one(session_doc)
-            
-            print(f"🔧 Test user created: {self.user_id}")
-            print(f"🔧 Session token: {self.session_token}")
-            return True
-        except Exception as e:
-            print(f"❌ Failed to setup test user: {str(e)}")
-            return False
+        """Create test user and session in MongoDB or use existing"""
+        if self.use_existing_session:
+            # Verify existing session exists
+            session = self.db.sessions.find_one({"session_token": self.session_token})
+            if session:
+                print(f"🔧 Using existing test session: {self.session_token}")
+                print(f"🔧 User ID: {self.user_id}")
+                return True
+            else:
+                print(f"❌ Existing session not found, creating new one")
+                # Fall back to creating new session
+                self.use_existing_session = False
+        
+        if not self.use_existing_session:
+            try:
+                timestamp = int(datetime.now().timestamp())
+                self.user_id = f"test-user-{timestamp}"
+                self.session_token = f"test_session_{timestamp}"
+                
+                # Create test user
+                user_doc = {
+                    "user_id": self.user_id,
+                    "email": f"test.user.{timestamp}@example.com",
+                    "name": "Test User",
+                    "picture": "https://via.placeholder.com/150",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                self.db.users.insert_one(user_doc)
+                
+                # Create test session
+                session_doc = {
+                    "user_id": self.user_id,
+                    "session_token": self.session_token,
+                    "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+                    "created_at": datetime.now(timezone.utc)
+                }
+                self.db.sessions.insert_one(session_doc)
+                
+                print(f"🔧 Test user created: {self.user_id}")
+                print(f"🔧 Session token: {self.session_token}")
+                return True
+            except Exception as e:
+                print(f"❌ Failed to setup test user: {str(e)}")
+                return False
 
     def cleanup_test_data(self):
         """Clean up test data"""
+        if self.use_existing_session:
+            # Don't cleanup existing test session data
+            print(f"🔧 Preserving existing test session data for user: {self.user_id}")
+            return
+            
         try:
             if self.user_id:
                 self.db.users.delete_many({"user_id": self.user_id})
@@ -278,7 +302,9 @@ class CaseManagementAPITester:
         return self.tests_passed == self.tests_run
 
 def main():
-    tester = CaseManagementAPITester()
+    # Test with existing session for UI testing
+    print("🧪 Testing with existing session for UI integration...")
+    tester = CaseManagementAPITester(use_existing_session=True)
     success = tester.run_all_tests()
     return 0 if success else 1
 
