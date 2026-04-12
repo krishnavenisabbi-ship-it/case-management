@@ -24,7 +24,16 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex" data-testid="login-page">
-      {/* Login Form - Centered */}
+      {/* Left - Law Image */}
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gray-100">
+        <img
+          src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/hybcv49j_image.png"
+          alt="Scales of Justice"
+          className="w-[420px] h-auto object-contain opacity-90"
+        />
+      </div>
+
+      {/* Right - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-white">
         <div className="w-full max-w-md">
           {/* Logo */}
