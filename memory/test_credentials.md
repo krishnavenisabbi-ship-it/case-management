@@ -2,6 +2,7 @@
 
 ## Authentication
 - **Method**: Google OAuth (Emergent-managed Google Auth)
+- **Admin Email**: krishnavenisabbi@gmail.com (hardcoded as admin)
 - **No password-based credentials** - uses Google SSO
 
 ## Test Session (for automated testing)
@@ -16,6 +17,8 @@ db.users.insertOne({
   email: 'test.user@example.com',
   name: 'Test User',
   picture: 'https://via.placeholder.com/150',
+  role: 'user',
+  blocked: false,
   created_at: new Date()
 });
 db.sessions.insertOne({
@@ -28,6 +31,10 @@ print('Session token: ' + sessionToken);
 print('User ID: ' + userId);
 "
 ```
+
+## Existing Test Users
+- **Admin**: user_id='test-user-ui1', email='krishnavenisabbi@gmail.com', session='test_session_ui1', role='admin'
+- **Regular User**: user_id='test-user-regular', email='regularuser@example.com', role='user'
 
 ## Database
 - **MongoDB**: `mongodb://localhost:27017`
