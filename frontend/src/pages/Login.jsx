@@ -1,11 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const navigate = useNavigate();
-
-  const handleLogin = () => {
-    navigate("/dashboard");
-  };
 
   return (
     <div className="min-h-screen flex">
@@ -36,16 +33,21 @@ export default function Login() {
             Welcome Back
           </h2>
           <p className="text-gray-500 mb-8">
-            Sign in to manage your cases
+            Sign in with Google
           </p>
 
-          {/* Button */}
-          <button
-            onClick={handleLogin}
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
-          >
-            Continue
-          </button>
+          {/* ✅ Google Login Button */}
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                console.log("LOGIN SUCCESS", credentialResponse);
+                navigate("/dashboard"); // temporary
+              }}
+              onError={() => {
+                console.log("Login Failed");
+              }}
+            />
+          </div>
 
         </div>
       </div>
