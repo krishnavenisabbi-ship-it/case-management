@@ -24,7 +24,7 @@ const Register = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:10000/api/register", // change after deploy
+        "https://yourcase-backend.onrender.com/api", // change after deploy
         formData
       );
 
