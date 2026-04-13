@@ -1,4 +1,3 @@
-<h1>NEW LOGIN VERSION</h1>
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -42,7 +41,9 @@ export default function Login() {
             <GoogleLogin
               onSuccess={(credentialResponse) => {
                 console.log("LOGIN SUCCESS", credentialResponse);
-                navigate("/dashboard"); // temporary
+
+                // TEMP: redirect after login
+                navigate("/dashboard");
               }}
               onError={() => {
                 console.log("Login Failed");
