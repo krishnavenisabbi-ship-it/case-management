@@ -17,9 +17,7 @@ export default function Login() {
     <div className="min-h-screen flex" data-testid="login-page">
       {/* Left - Image */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gray-100">
-        <img
-          src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/hybcv49j_image.png"
-          alt="Scales of Justice"
+                  alt="Scales of Justice"
           className="w-[420px] h-auto object-contain opacity-90"
         />
       </div>
