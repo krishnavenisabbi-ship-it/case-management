@@ -8,7 +8,7 @@ export default function Login() {
   useEffect(() => {
     // Check if already authenticated
     if (window.location.hash?.includes("session_id=")) return;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+    const backendUrl = "https://yourcase-backend.onrender.com";
     fetch(`${backendUrl}/api/auth/me`, { credentials: "include" })
       .then((res) => {
         if (res.ok) navigate("/dashboard", { replace: true });
