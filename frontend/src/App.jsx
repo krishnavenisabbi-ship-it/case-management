@@ -1,39 +1,25 @@
-import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Login from "./pages/Login.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import PublicCaseView from "./pages/PublicCaseView.jsx";
-import AuthCallback from "./components/AuthCallback.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
-const API = import.meta.env.VITE_BACKEND_URL || "";
-
-function AppRouter() {
-  const location = useLocation();
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Synchronous check for session_id in URL fragment before any route renders
-  if (location.hash?.includes("session_id=")) {
-    return <AuthCallback />;
-  }
+function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/case/:shareToken" element={<PublicCaseView />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <BrowserRouter>
+      <Routes>
+        {/* Redirect root → dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Main routes */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Fallback (any unknown route) */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
-export default function App() {
-  return <AppRouter />;
-}
-
-export { API };
+export default App;
