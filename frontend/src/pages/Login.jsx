@@ -1,7 +1,6 @@
 import { GoogleLogin } from "@react-oauth/google";
 import logo from "../assets/logo.png";
 
-<img src={logo} alt="Law" className="w-[350px]" />
 export default function Login() {
 
   const handleSuccess = (res) => {
@@ -13,10 +12,10 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
 
-      {/* LEFT SIDE (LOGO) */}
+      {/* LEFT SIDE (LOCAL LOGO) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-100 items-center justify-center">
         <img
-          src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/hybcv49j_image.png"
+          src={logo}   // ✅ USE LOCAL IMAGE HERE
           alt="Law"
           className="w-[350px]"
         />
@@ -26,6 +25,13 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center bg-white px-6">
 
         <div className="max-w-md w-full text-center">
+
+          {/* ✅ ADD LOGO HERE ALSO (STEP 3 POSITION) */}
+          <img
+            src={logo}
+            alt="Law"
+            className="w-[120px] mx-auto mb-4"
+          />
 
           <h1 className="text-3xl font-bold mb-2">
             CASE MANAGEMENT
