@@ -1,5 +1,7 @@
 import { GoogleLogin } from "@react-oauth/google";
+import logo from "../assets/logo.png";
 
+<img src={logo} alt="Law" className="w-[350px]" />
 export default function Login() {
 
   const handleSuccess = (res) => {
