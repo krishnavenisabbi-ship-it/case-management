@@ -1,13 +1,27 @@
-import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
-  const navigate = useNavigate();
+
+  // ✅ SUCCESS HANDLER (THIS IS WHAT YOU WANT)
+  const handleSuccess = (response) => {
+    console.log("LOGIN SUCCESS", response);
+
+    // You can process token here later
+    const token = response.credential;
+
+    // Temporary redirect
+    window.location.href = "/dashboard";
+  };
+
+  // ❌ ERROR HANDLER
+  const handleError = () => {
+    console.log("LOGIN FAILED");
+  };
 
   return (
     <div className="min-h-screen flex">
 
-      {/* Left side image */}
+      {/* Left side */}
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-gray-100">
         <img
           src="https://customer-assets.emergentagent.com/job_case-dashboard-pro-1/artifacts/hybcv49j_image.png"
@@ -20,7 +34,6 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
 
-          {/* Title */}
           <h1 className="text-2xl font-bold mb-2">
             CASE MANAGEMENT
           </h1>
@@ -28,7 +41,6 @@ export default function Login() {
             SYSTEM
           </p>
 
-          {/* Welcome */}
           <h2 className="text-3xl font-bold mb-2">
             Welcome Back
           </h2>
@@ -36,18 +48,11 @@ export default function Login() {
             Sign in with Google
           </p>
 
-          {/* ✅ Google Login Button */}
+          {/* ✅ Google Button */}
           <div className="flex justify-center">
             <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                console.log("LOGIN SUCCESS", credentialResponse);
-
-                // TEMP: redirect after login
-                navigate("/dashboard");
-              }}
-              onError={() => {
-                console.log("Login Failed");
-              }}
+              onSuccess={handleSuccess}
+              onError={handleError}
             />
           </div>
 
