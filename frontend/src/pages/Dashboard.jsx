@@ -3,12 +3,6 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   return <h1>DASHBOARD WORKING ✅</h1>;
 }
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (!user) navigate("/login");
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-100">
 
