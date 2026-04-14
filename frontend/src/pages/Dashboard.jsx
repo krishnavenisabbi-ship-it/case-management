@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";  
+import { useNavigate } from "react-router-dom";
+
 export default function Dashboard() {
-  return <h1>DASHBOARD WORKING ✅</h1>;
-}
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-100">
 
@@ -12,7 +12,7 @@ export default function Dashboard() {
         <button
           onClick={() => {
             localStorage.removeItem("user");
-            navigate("/login");
+            navigate("/");
           }}
           className="bg-black text-white px-4 py-2 rounded"
         >
@@ -23,12 +23,11 @@ export default function Dashboard() {
       {/* MAIN CONTENT */}
       <div className="max-w-7xl mx-auto p-6">
 
-        {/* TITLE */}
         <h2 className="text-2xl font-semibold mb-6">
           Dashboard
         </h2>
 
-        {/* STATS CARDS */}
+        {/* CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
           <div className="bg-white p-6 rounded-xl shadow">
@@ -51,7 +50,6 @@ export default function Dashboard() {
         {/* TABLE */}
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="w-full text-left">
-
             <thead className="bg-gray-200">
               <tr>
                 <th className="p-4">Case ID</th>
@@ -76,7 +74,6 @@ export default function Dashboard() {
                 <td className="p-4">—</td>
               </tr>
             </tbody>
-
           </table>
         </div>
 

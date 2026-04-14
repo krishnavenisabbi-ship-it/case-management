@@ -4,7 +4,8 @@ export default function Login() {
 
   const handleSuccess = (response) => {
     console.log("LOGIN SUCCESS", response);
-    window.location.assign("/dashboard");
+	localStorage.setItem("user", JSON.stringify(response));
+     window.location.assign("/dashboard");
   };
 
   const handleError = () => {
