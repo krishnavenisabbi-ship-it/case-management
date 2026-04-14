@@ -10,7 +10,7 @@ export default function Login() {
     const token = response.credential;
 
     // Temporary redirect
-    window.location.href = "/dashboard";
+    window.location.assign("/dashboard");
   };
 
   // ❌ ERROR HANDLER
