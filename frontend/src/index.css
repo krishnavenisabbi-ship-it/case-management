@@ -1,32 +1,9 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --font-outfit: 'Outfit', sans-serif;
-  --font-plex: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --font-playfair: 'Playfair Display', serif;
-  --color-surface: #F9FAFB;
-  --color-accent: #002FA7;
-  --color-accent-hover: #001d6e;
-  --color-warning: #FFD700;
-}
-
+/* Optional custom styles */
 body {
-  font-family: 'IBM Plex Sans', sans-serif;
   margin: 0;
-  background: #FFFFFF;
-  color: #000000;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #000; }
-
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #000;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
