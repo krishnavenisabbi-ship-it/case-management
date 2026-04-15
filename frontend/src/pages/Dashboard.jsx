@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 
 export default function Dashboard() {
 
-  const [cases, setCases] = useState([]);
+  // ✅ LOAD FROM LOCALSTORAGE (FIXED)
+  const [cases, setCases] = useState(() => {
+    const saved = localStorage.getItem("cases");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
@@ -19,15 +24,7 @@ export default function Dashboard() {
 
   const [editIndex, setEditIndex] = useState(null);
 
-  // ✅ LOAD FROM LOCAL STORAGE
-  useEffect(() => {
-    const saved = localStorage.getItem("cases");
-    if (saved) {
-      setCases(JSON.parse(saved));
-    }
-  }, []);
-
-  // ✅ SAVE TO LOCAL STORAGE
+  // ✅ SAVE TO LOCALSTORAGE
   useEffect(() => {
     localStorage.setItem("cases", JSON.stringify(cases));
   }, [cases]);
@@ -48,7 +45,7 @@ export default function Dashboard() {
       setCases((prev) => [...prev, { ...form }]);
     }
 
-    // reset form
+    // reset
     setForm({
       caseNumber: "",
       petitioner: "",
@@ -192,10 +189,7 @@ export default function Dashboard() {
                 </tr>
               ) : (
                 filteredCases.map((c, i) => (
-                  <tr key={i}
-                    onMouseOver={(e)=>e.currentTarget.style.background="#f9fafb"}
-                    onMouseOut={(e)=>e.currentTarget.style.background="white"}
-                  >
+                  <tr key={i}>
                     <td style={cell}>{i+1}</td>
                     <td style={cell}>{c.caseNumber}</td>
                     <td style={cell}>{c.petitioner}</td>
@@ -205,11 +199,14 @@ export default function Dashboard() {
                     <td style={cell}>{c.year}</td>
                     <td style={cell}>{c.phone}</td>
                     <td style={cell}>{c.date}</td>
+
                     <td style={{
                       ...cell,
                       color: c.status==="Pending"?"orange":"green",
                       fontWeight:"bold"
-                    }}>{c.status}</td>
+                    }}>
+                      {c.status}
+                    </td>
 
                     <td style={cell}>
                       <button onClick={()=>editCase(i)} style={editBtn}>Edit</button>
@@ -227,11 +224,15 @@ export default function Dashboard() {
   );
 }
 
-// ---------- REUSABLE INPUT ----------
+// ---------- INPUT ----------
 const renderInput = (label, value, onChange) => (
   <div>
     <label style={labelStyle}>{label}</label>
-    <input style={inputStyle} value={value} onChange={(e)=>onChange(e.target.value)} />
+    <input
+      style={inputStyle}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   </div>
 );
 
