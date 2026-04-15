@@ -40,8 +40,12 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* CONTENT */}
-      <div style={{ padding: "30px" }}>
+      {/* CONTENT WRAPPER (CENTERED) */}
+      <div style={{
+        padding: "30px",
+        maxWidth: "1100px",
+        margin: "auto"
+      }}>
 
         <h2 style={{ marginBottom: "20px" }}>Dashboard</h2>
 
@@ -71,7 +75,8 @@ export default function Dashboard() {
         <div style={{
           background: "white",
           padding: "20px",
-          borderRadius: "8px"
+          borderRadius: "10px",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
         }}>
           <table width="100%">
             <thead>
@@ -85,7 +90,12 @@ export default function Dashboard() {
 
             <tbody>
               {cases.map((c, i) => (
-                <tr key={i}>
+                <tr
+                  key={i}
+                  style={{ cursor: "pointer" }}
+                  onMouseOver={(e) => e.currentTarget.style.background = "#f9fafb"}
+                  onMouseOut={(e) => e.currentTarget.style.background = "white"}
+                >
                   <td>{c.id}</td>
                   <td>{c.name}</td>
                   <td style={{ color: c.status === "Active" ? "green" : "red" }}>
@@ -105,8 +115,9 @@ export default function Dashboard() {
 
 const cardStyle = {
   background: "white",
-  padding: "20px",
-  borderRadius: "8px",
+  padding: "25px",
+  borderRadius: "10px",
   flex: 1,
   textAlign: "center",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
 };
