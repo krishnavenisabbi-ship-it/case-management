@@ -31,10 +31,10 @@ export default function Dashboard() {
       setCases(updated);
       setEditIndex(null);
     } else {
-      setCases([...cases, { ...form }]);
+      setCases((prev) => [...prev, { ...form }]);
     }
 
-    // reset
+    // reset form
     setForm({
       caseNumber: "",
       petitioner: "",
@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   // ✅ DELETE
   const deleteCase = (index) => {
-    setCases(cases.filter((_, i) => i !== index));
+    setCases((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -82,7 +82,7 @@ export default function Dashboard() {
         {/* FORM */}
         <form
           onSubmit={(e) => {
-            e.preventDefault();   // ✅ THIS FIXES YOUR ISSUE
+            e.preventDefault();
             handleSubmit();
           }}
           style={{
@@ -100,11 +100,15 @@ export default function Dashboard() {
             gap: "10px"
           }}>
 
+            {/* FIXED INPUTS */}
             <input
               placeholder="Case Number"
               value={form.caseNumber}
               onChange={(e) =>
-                setForm({ ...form, caseNumber: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  caseNumber: e.target.value
+                }))
               }
             />
 
@@ -112,7 +116,10 @@ export default function Dashboard() {
               placeholder="Petitioner"
               value={form.petitioner}
               onChange={(e) =>
-                setForm({ ...form, petitioner: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  petitioner: e.target.value
+                }))
               }
             />
 
@@ -120,7 +127,10 @@ export default function Dashboard() {
               placeholder="Respondent"
               value={form.respondent}
               onChange={(e) =>
-                setForm({ ...form, respondent: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  respondent: e.target.value
+                }))
               }
             />
 
@@ -128,7 +138,10 @@ export default function Dashboard() {
               placeholder="Case Type"
               value={form.type}
               onChange={(e) =>
-                setForm({ ...form, type: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  type: e.target.value
+                }))
               }
             />
 
@@ -136,7 +149,10 @@ export default function Dashboard() {
               placeholder="Advocate"
               value={form.advocate}
               onChange={(e) =>
-                setForm({ ...form, advocate: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  advocate: e.target.value
+                }))
               }
             />
 
@@ -144,7 +160,10 @@ export default function Dashboard() {
               placeholder="Year"
               value={form.year}
               onChange={(e) =>
-                setForm({ ...form, year: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  year: e.target.value
+                }))
               }
             />
 
@@ -152,7 +171,10 @@ export default function Dashboard() {
               placeholder="Phone"
               value={form.phone}
               onChange={(e) =>
-                setForm({ ...form, phone: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  phone: e.target.value
+                }))
               }
             />
 
@@ -160,7 +182,10 @@ export default function Dashboard() {
               placeholder="Adjournment Date"
               value={form.date}
               onChange={(e) =>
-                setForm({ ...form, date: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  date: e.target.value
+                }))
               }
             />
 
@@ -170,7 +195,10 @@ export default function Dashboard() {
             <select
               value={form.status}
               onChange={(e) =>
-                setForm({ ...form, status: e.target.value })
+                setForm((prev) => ({
+                  ...prev,
+                  status: e.target.value
+                }))
               }
             >
               <option>Pending</option>
@@ -179,7 +207,7 @@ export default function Dashboard() {
           </div>
 
           <button
-            type="submit"   // ✅ IMPORTANT
+            type="submit"
             style={{
               marginTop: "15px",
               padding: "10px",
@@ -238,13 +266,25 @@ export default function Dashboard() {
                     <td>{c.status}</td>
 
                     <td>
-                      <button onClick={() => editCase(i)}>Edit</button>
-                      <button onClick={() => deleteCase(i)}>Delete</button>
+                      <button
+                        type="button"
+                        onClick={() => editCase(i)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteCase(i)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
+
           </table>
         </div>
 
