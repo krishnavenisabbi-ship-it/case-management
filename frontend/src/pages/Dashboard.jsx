@@ -1,9 +1,10 @@
-"use client"; // REQUIRED if you are using Next.js App Router
-
 import { useState } from "react";
 
 export default function Dashboard() {
-  const initialFormState = {
+
+  const [cases, setCases] = useState([]);
+
+  const [form, setForm] = useState({
     caseNumber: "",
     petitioner: "",
     respondent: "",
@@ -12,39 +13,39 @@ export default function Dashboard() {
     year: "",
     phone: "",
     date: "",
-    status: "Pending",
-  };
+    status: "Pending"
+  });
 
-  const [cases, setCases] = useState([]);
-  const [form, setForm] = useState(initialFormState);
   const [editIndex, setEditIndex] = useState(null);
 
-  // ✅ SINGLE HANDLER FOR ALL INPUTS
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // ✅ ADD / UPDATE CASE
+  // ✅ ADD / UPDATE
   const handleSubmit = () => {
-    // 1. Validation
-    if (!form.caseNumber.trim()) {
-      alert("Case Number is required!");
+    if (!form.caseNumber) {
+      alert("Enter Case Number");
       return;
     }
 
-    // 2. Update or Add
     if (editIndex !== null) {
       const updated = [...cases];
       updated[editIndex] = { ...form };
       setCases(updated);
       setEditIndex(null);
     } else {
-      setCases((prev) => [...prev, { ...form }]);
+      setCases([...cases, { ...form }]);
     }
 
-    // 3. Reset Form
-    setForm(initialFormState);
+    // reset
+    setForm({
+      caseNumber: "",
+      petitioner: "",
+      respondent: "",
+      type: "",
+      advocate: "",
+      year: "",
+      phone: "",
+      date: "",
+      status: "Pending"
+    });
   };
 
   // ✅ EDIT
@@ -55,20 +56,19 @@ export default function Dashboard() {
 
   // ✅ DELETE
   const deleteCase = (index) => {
-    setCases((prev) => prev.filter((_, i) => i !== index));
+    setCases(cases.filter((_, i) => i !== index));
   };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
+
       {/* SIDEBAR */}
-      <div
-        style={{
-          width: "220px",
-          background: "#111",
-          color: "white",
-          padding: "20px",
-        }}
-      >
+      <div style={{
+        width: "220px",
+        background: "#111",
+        color: "white",
+        padding: "20px"
+      }}>
         <h2>⚖️ CMS</h2>
         <p>Dashboard</p>
         <p>Add Case</p>
@@ -76,113 +76,132 @@ export default function Dashboard() {
 
       {/* MAIN */}
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
-        <h2 style={{ marginBottom: "20px" }}>Dashboard</h2>
+
+        <h2>Dashboard</h2>
 
         {/* FORM */}
-        <div
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();   // ✅ THIS FIXES YOUR ISSUE
+            handleSubmit();
+          }}
           style={{
             background: "white",
             padding: "20px",
             marginBottom: "20px",
-            borderRadius: "10px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+            borderRadius: "10px"
           }}
         >
           <h3>{editIndex !== null ? "Edit Case" : "Add Case"}</h3>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "10px",
-            }}
-          >
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "10px"
+          }}>
+
             <input
-              name="caseNumber"
               placeholder="Case Number"
               value={form.caseNumber}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, caseNumber: e.target.value })
+              }
             />
+
             <input
-              name="petitioner"
               placeholder="Petitioner"
               value={form.petitioner}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, petitioner: e.target.value })
+              }
             />
+
             <input
-              name="respondent"
               placeholder="Respondent"
               value={form.respondent}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, respondent: e.target.value })
+              }
             />
+
             <input
-              name="type"
               placeholder="Case Type"
               value={form.type}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, type: e.target.value })
+              }
             />
+
             <input
-              name="advocate"
               placeholder="Advocate"
               value={form.advocate}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, advocate: e.target.value })
+              }
             />
+
             <input
-              name="year"
               placeholder="Year"
               value={form.year}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, year: e.target.value })
+              }
             />
+
             <input
-              name="phone"
               placeholder="Phone"
               value={form.phone}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, phone: e.target.value })
+              }
             />
+
             <input
-              name="date"
               placeholder="Adjournment Date"
               value={form.date}
-              onChange={handleChange}
+              onChange={(e) =>
+                setForm({ ...form, date: e.target.value })
+              }
             />
+
           </div>
 
           <div style={{ marginTop: "10px" }}>
-            <select name="status" value={form.status} onChange={handleChange}>
-              <option value="Pending">Pending</option>
-              <option value="Disposed">Disposed</option>
+            <select
+              value={form.status}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value })
+              }
+            >
+              <option>Pending</option>
+              <option>Disposed</option>
             </select>
           </div>
 
-          {/* BUTTON */}
           <button
-            onClick={handleSubmit}
+            type="submit"   // ✅ IMPORTANT
             style={{
               marginTop: "15px",
-              padding: "10px 18px",
-              background: editIndex !== null ? "#16a34a" : "#2563eb",
+              padding: "10px",
+              background: editIndex !== null ? "green" : "#2563eb",
               color: "white",
               border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
+              cursor: "pointer"
             }}
           >
             {editIndex !== null ? "Update Case" : "+ Add Case"}
           </button>
-        </div>
+        </form>
 
         {/* TABLE */}
-        <div
-          style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "10px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-          }}
-        >
+        <div style={{
+          background: "white",
+          padding: "20px",
+          borderRadius: "10px"
+        }}>
           <table width="100%">
             <thead>
-              <tr style={{ background: "#f3f4f6", textAlign: "left" }}>
+              <tr style={{ background: "#eee" }}>
                 <th>S.No</th>
                 <th>Case Number</th>
                 <th>Petitioner</th>
@@ -200,10 +219,7 @@ export default function Dashboard() {
             <tbody>
               {cases.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="11"
-                    style={{ textAlign: "center", padding: "20px" }}
-                  >
+                  <td colSpan="11" style={{ textAlign: "center" }}>
                     No cases added
                   </td>
                 </tr>
@@ -219,44 +235,11 @@ export default function Dashboard() {
                     <td>{c.year}</td>
                     <td>{c.phone}</td>
                     <td>{c.date}</td>
-                    <td
-                      style={{
-                        color: c.status === "Pending" ? "orange" : "green",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {c.status}
-                    </td>
+                    <td>{c.status}</td>
 
                     <td>
-                      <button
-                        onClick={() => editCase(i)}
-                        style={{
-                          marginRight: "5px",
-                          background: "#f59e0b",
-                          color: "white",
-                          border: "none",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => deleteCase(i)}
-                        style={{
-                          background: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          padding: "5px 10px",
-                          cursor: "pointer",
-                          borderRadius: "4px",
-                        }}
-                      >
-                        Delete
-                      </button>
+                      <button onClick={() => editCase(i)}>Edit</button>
+                      <button onClick={() => deleteCase(i)}>Delete</button>
                     </td>
                   </tr>
                 ))
@@ -264,6 +247,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );
