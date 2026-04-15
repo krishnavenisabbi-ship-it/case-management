@@ -1,17 +1,63 @@
 import { GoogleLogin } from "@react-oauth/google";
+import logo from "../assets/logo.png";   // ✅ THIS WAS MISSING
 
 export default function Login() {
-  return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>Login Page</h1>
 
-      <GoogleLogin
-        onSuccess={(res) => {
-          console.log("SUCCESS", res);
-          window.location.href = "/dashboard";
-        }}
-        onError={() => console.log("Login Failed")}
-      />
+  const handleSuccess = (res) => {
+    console.log("LOGIN SUCCESS", res);
+    localStorage.setItem("user", JSON.stringify(res));
+    window.location.href = "/dashboard";
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex"
+    }}>
+
+      {/* LEFT SIDE */}
+      <div style={{
+        flex: 1,
+        background: "#f3f4f6",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+        <img src={logo} alt="logo" style={{ width: "250px" }} />
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+
+        {/* TOP LOGO */}
+        <img src={logo} alt="logo" style={{ width: "100px", marginBottom: "10px" }} />
+
+        <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
+          CASE MANAGEMENT
+        </h1>
+
+        <p style={{ color: "gray", marginBottom: "20px" }}>
+          SYSTEM
+        </p>
+
+        <h2>Welcome Back</h2>
+
+        <p style={{ marginBottom: "20px" }}>
+          Sign in to manage your cases
+        </p>
+
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={() => console.log("Login Failed")}
+        />
+
+      </div>
     </div>
   );
 }
