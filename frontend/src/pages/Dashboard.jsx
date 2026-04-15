@@ -17,85 +17,78 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      
       {/* HEADER */}
-      <header className="bg-white shadow">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">Case Management</h1>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "20px"
+      }}>
+        <h1>Case Management</h1>
 
-          <button
-            onClick={() => {
-              localStorage.removeItem("user");
-              navigate("/");
-            }}
-            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+        <button
+          onClick={() => {
+            localStorage.removeItem("user");
+            navigate("/");
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
-      {/* MAIN */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      {/* TITLE */}
+      <h2>Dashboard</h2>
 
-        {/* TITLE */}
-        <h2 className="text-2xl font-semibold mb-6">
-          Dashboard
-        </h2>
+      {/* STATS */}
+      <div style={{
+        display: "flex",
+        gap: "20px",
+        marginTop: "20px",
+        marginBottom: "30px"
+      }}>
 
-        {/* STATS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500">Total Cases</p>
-            <h3 className="text-3xl font-bold mt-2">{stats.total}</h3>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500">Active Cases</p>
-            <h3 className="text-3xl font-bold mt-2">{stats.active}</h3>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow text-center">
-            <p className="text-gray-500">Closed Cases</p>
-            <h3 className="text-3xl font-bold mt-2">{stats.closed}</h3>
-          </div>
-
+        <div style={{ border: "1px solid #ccc", padding: "20px" }}>
+          <p>Total Cases</p>
+          <h3>{stats.total}</h3>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          <table className="w-full text-left">
-
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-6 py-3">Case ID</th>
-                <th className="px-6 py-3">Client Name</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3">Next Hearing</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {cases.map((c, i) => (
-                <tr key={i} className="border-t">
-                  <td className="px-6 py-4">{c.id}</td>
-                  <td className="px-6 py-4">{c.name}</td>
-                  <td className="px-6 py-4">
-                    <span className={c.status === "Active" ? "text-green-600" : "text-red-600"}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{c.date}</td>
-                </tr>
-              ))}
-            </tbody>
-
-          </table>
+        <div style={{ border: "1px solid #ccc", padding: "20px" }}>
+          <p>Active Cases</p>
+          <h3>{stats.active}</h3>
         </div>
 
-      </main>
+        <div style={{ border: "1px solid #ccc", padding: "20px" }}>
+          <p>Closed Cases</p>
+          <h3>{stats.closed}</h3>
+        </div>
+
+      </div>
+
+      {/* TABLE */}
+      <table border="1" cellPadding="10" style={{ width: "100%" }}>
+        <thead>
+          <tr>
+            <th>Case ID</th>
+            <th>Client Name</th>
+            <th>Status</th>
+            <th>Next Hearing</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {cases.map((c, i) => (
+            <tr key={i}>
+              <td>{c.id}</td>
+              <td>{c.name}</td>
+              <td>{c.status}</td>
+              <td>{c.date}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
     </div>
   );
 }
