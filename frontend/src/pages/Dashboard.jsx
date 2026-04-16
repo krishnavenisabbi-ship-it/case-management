@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const BASE_URL = "https://case-management-dkgs.onrender.com";
+
 export default function Dashboard() {
 
   const [cases, setCases] = useState([]);
@@ -20,14 +22,18 @@ export default function Dashboard() {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔥 FETCH FROM BACKEND
+  // FETCH DATA
   useEffect(() => {
     fetchCases();
   }, []);
 
   const fetchCases = async () => {
-    const res = await axios.get("http://localhost:5000/cases");
-    setCases(res.data);
+    try {
+      const res = await axios.get(`${BASE_URL}/cases`);
+      setCases(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ADD / UPDATE
@@ -37,26 +43,31 @@ export default function Dashboard() {
       return;
     }
 
-    if (editId) {
-      await axios.put(`http://localhost:5000/cases/${editId}`, form);
-      setEditId(null);
-    } else {
-      await axios.post("http://localhost:5000/cases", form);
+    try {
+      if (editId) {
+        await axios.put(`${BASE_URL}/cases/${editId}`, form);
+        setEditId(null);
+      } else {
+        await axios.post(`${BASE_URL}/cases`, form);
+      }
+
+      fetchCases();
+
+      setForm({
+        caseNumber: "",
+        petitioner: "",
+        respondent: "",
+        type: "",
+        advocate: "",
+        year: "",
+        phone: "",
+        date: "",
+        status: "Pending",
+      });
+
+    } catch (err) {
+      console.error(err);
     }
-
-    fetchCases();
-
-    setForm({
-      caseNumber: "",
-      petitioner: "",
-      respondent: "",
-      type: "",
-      advocate: "",
-      year: "",
-      phone: "",
-      date: "",
-      status: "Pending",
-    });
   };
 
   // EDIT
@@ -68,8 +79,13 @@ export default function Dashboard() {
   // DELETE
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
-    await axios.delete(`http://localhost:5000/cases/${id}`);
-    fetchCases();
+
+    try {
+      await axios.delete(`${BASE_URL}/cases/${id}`);
+      fetchCases();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // SEARCH
@@ -135,7 +151,12 @@ export default function Dashboard() {
           placeholder="Search..."
           value={search}
           onChange={(e)=>setSearch(e.target.value)}
-          style={{ padding:"10px", width:"100%", marginBottom:"10px" }}
+          style={{
+            padding:"10px",
+            width:"100%",
+            marginBottom:"10px",
+            borderRadius:"6px"
+          }}
         />
 
         {/* TABLE */}
@@ -149,24 +170,32 @@ export default function Dashboard() {
             </thead>
 
             <tbody>
-              {filteredCases.map((c,i)=>(
-                <tr key={c._id}>
-                  <td>{i+1}</td>
-                  <td>{c.caseNumber}</td>
-                  <td>{c.petitioner}</td>
-                  <td>{c.respondent}</td>
-                  <td>{c.type}</td>
-                  <td>{c.advocate}</td>
-                  <td>{c.year}</td>
-                  <td>{c.phone}</td>
-                  <td>{c.date}</td>
-                  <td>{c.status}</td>
-                  <td>
-                    <button onClick={()=>editCase(c)}>Edit</button>
-                    <button onClick={()=>deleteCase(c._id)}>Delete</button>
+              {filteredCases.length === 0 ? (
+                <tr>
+                  <td colSpan="11" style={{ textAlign:"center", padding:"15px" }}>
+                    No cases found
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredCases.map((c,i)=>(
+                  <tr key={c._id}>
+                    <td>{i+1}</td>
+                    <td>{c.caseNumber}</td>
+                    <td>{c.petitioner}</td>
+                    <td>{c.respondent}</td>
+                    <td>{c.type}</td>
+                    <td>{c.advocate}</td>
+                    <td>{c.year}</td>
+                    <td>{c.phone}</td>
+                    <td>{c.date}</td>
+                    <td>{c.status}</td>
+                    <td>
+                      <button onClick={()=>editCase(c)}>Edit</button>
+                      <button onClick={()=>deleteCase(c._id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -176,7 +205,7 @@ export default function Dashboard() {
   );
 }
 
-// ---------- HELPERS ----------
+// HELPERS
 const renderInput = (label, value, onChange) => (
   <div>
     <label>{label}</label>
@@ -204,10 +233,11 @@ const gridStyle = {
   gap:"10px"
 };
 
-const submitBtn = () => ({
+const submitBtn = (editId) => ({
   marginTop:"10px",
   padding:"10px",
-  background:"blue",
+  background: editId ? "green" : "blue",
   color:"white",
-  border:"none"
+  border:"none",
+  borderRadius:"6px"
 });
