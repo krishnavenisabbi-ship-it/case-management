@@ -1,65 +1,89 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
-
-import authRoutes from "./routes/auth.js";
-
-dotenv.config();
 
 const app = express();
 
-// ======================
-// Middleware
-// ======================
 app.use(cors());
 app.use(express.json());
 
-// ======================
-// Health Check Route
-// ======================
-app.get("/", (req, res) => {
-  res.send("Server is running 🚀");
-});
+/* ================== DATABASE ================== */
+console.log("Connecting to MongoDB...");
 
-// ======================
-// API Routes
-// ======================
-app.use("/api", authRoutes);
+mongoose.connect("mongodb://127.0.0.1:27017/casemanagement");
 
-// Temporary route (replace later with DB model)
-app.get("/api/cases", (req, res) => {
-  res.json([]);
-});
-
-// ======================
-// MongoDB Connection
-// ======================
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
+mongoose.connection.on("connected", () => {
   console.log("MongoDB Connected ✅");
-})
-.catch((err) => {
-  console.error("MongoDB Connection Error ❌:", err);
 });
 
-// ======================
-// Handle Unknown Routes (Fixes 404 issue)
-// ======================
-app.use((req, res) => {
-  res.status(404).json({
-    message: "Route not found ❌",
-  });
+
+
+/* ================== MODEL ================== */
+const caseSchema = new mongoose.Schema({
+  caseNumber: String,
+  petitioner: String,
+  respondent: String,
+  type: String,
+  advocate: String,
+  year: String,
+  phone: String,
+  date: String,
+  status: String
+}, { timestamps: true });
+
+const Case = mongoose.model("Case", caseSchema);
+
+/* ================== ROUTES */
+
+// ROOT
+app.get("/", (req, res) => {
+  res.send("Backend is running ✅");
 });
 
-// ======================
-// Server Start
-// ======================
-const PORT = process.env.PORT || 10000;
+// GET
+app.get("/cases", async (req, res) => {
+  try {
+    const data = await Case.find().sort({ createdAt: -1 });
+    res.json(data);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch cases" });
+  }
+});
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// ADD
+app.post("/cases", async (req, res) => {
+  try {
+    const newCase = new Case(req.body);
+    await newCase.save();
+    res.json(newCase);
+  } catch {
+    res.status(500).json({ error: "Failed to add case" });
+  }
+});
+
+// DELETE
+app.delete("/cases/:id", async (req, res) => {
+  try {
+    await Case.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch {
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+// UPDATE
+app.put("/cases/:id", async (req, res) => {
+  try {
+    const updated = await Case.findByIdAndUpdate(req.params.id, req.body, {
+      new: true
+    });
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "Update failed" });
+  }
+});
+
+/* ================== SERVER ================== */
+app.listen(5000, () => {
+  console.log("Server running on port 5000 🚀");
 });
