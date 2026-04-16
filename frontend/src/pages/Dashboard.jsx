@@ -29,7 +29,7 @@ export default function Dashboard() {
 
   const fetchCases = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/cases`);
+      const res = await axios.get(`${BASE_URL}/api/cases`);
       setCases(res.data);
     } catch (err) {
       console.error(err);
@@ -45,10 +45,10 @@ export default function Dashboard() {
 
     try {
       if (editId) {
-        await axios.put(`${BASE_URL}/cases/${editId}`, form);
+        await axios.put(`${BASE_URL}/api/cases/${editId}`, form);
         setEditId(null);
       } else {
-        await axios.post(`${BASE_URL}/cases`, form);
+        await axios.post(`${BASE_URL}/api/cases`, form);
       }
 
       fetchCases();
@@ -72,7 +72,17 @@ export default function Dashboard() {
 
   // EDIT
   const editCase = (c) => {
-    setForm({ ...c });
+    setForm({
+      caseNumber: c.caseNumber,
+      petitioner: c.petitioner,
+      respondent: c.respondent,
+      type: c.type,
+      advocate: c.advocate,
+      year: c.year,
+      phone: c.phone,
+      date: c.date,
+      status: c.status,
+    });
     setEditId(c._id);
   };
 
@@ -81,7 +91,7 @@ export default function Dashboard() {
     if (!window.confirm("Delete this case?")) return;
 
     try {
-      await axios.delete(`${BASE_URL}/cases/${id}`);
+      await axios.delete(`${BASE_URL}/api/cases/${id}`);
       fetchCases();
     } catch (err) {
       console.error(err);
@@ -93,6 +103,11 @@ export default function Dashboard() {
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
   );
+
+  // STATS
+  const total = cases.length;
+  const pending = cases.filter(c => c.status === "Pending").length;
+  const disposed = cases.filter(c => c.status === "Disposed").length;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -113,6 +128,13 @@ export default function Dashboard() {
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
 
         <h2>Dashboard</h2>
+
+        {/* STATS */}
+        <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+          <div style={statCard}>Total: {total}</div>
+          <div style={statCard}>Pending: {pending}</div>
+          <div style={statCard}>Disposed: {disposed}</div>
+        </div>
 
         {/* FORM */}
         <div style={cardStyle}>
@@ -231,6 +253,13 @@ const gridStyle = {
   display:"grid",
   gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
   gap:"10px"
+};
+
+const statCard = {
+  background:"white",
+  padding:"15px",
+  borderRadius:"10px",
+  fontWeight:"bold"
 };
 
 const submitBtn = (editId) => ({
