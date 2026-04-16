@@ -27,15 +27,16 @@ export default function Dashboard() {
     fetchCases();
   }, []);
 
-  const fetchCases = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/cases`);
-      setCases(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchCases = async () => {
+  const res = await axios.get(`${BASE_URL}/cases`);
+  setCases(res.data);
+};
 
+await axios.post(`${BASE_URL}/cases`, form);
+
+await axios.put(`${BASE_URL}/cases/${editId}`, form);
+
+await axios.delete(`${BASE_URL}/cases/${id}`);
   // ADD / UPDATE
   const handleSubmit = async () => {
     if (!form.caseNumber) {

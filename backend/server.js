@@ -7,18 +7,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ================== DATABASE ================== */
 console.log("Connecting to MongoDB...");
 
-mongoose.connect("mongodb://127.0.0.1:27017/casemanagement");
+// ✅ USE ENV VARIABLE (ATLAS)
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected ✅"))
+  .catch(err => console.log("MongoDB Error ❌", err));
 
-mongoose.connection.on("connected", () => {
-  console.log("MongoDB Connected ✅");
-});
-
-
-
-/* ================== MODEL ================== */
+// MODEL
 const caseSchema = new mongoose.Schema({
   caseNumber: String,
   petitioner: String,
@@ -33,57 +29,33 @@ const caseSchema = new mongoose.Schema({
 
 const Case = mongoose.model("Case", caseSchema);
 
-/* ================== ROUTES */
-
-// ROOT
+// ROUTES
 app.get("/", (req, res) => {
-  res.send("Backend is running ✅");
+  res.send("Backend running ✅");
 });
 
-// GET
 app.get("/cases", async (req, res) => {
-  try {
-    const data = await Case.find().sort({ createdAt: -1 });
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: "Failed to fetch cases" });
-  }
+  const data = await Case.find().sort({ createdAt: -1 });
+  res.json(data);
 });
 
-// ADD
 app.post("/cases", async (req, res) => {
-  try {
-    const newCase = new Case(req.body);
-    await newCase.save();
-    res.json(newCase);
-  } catch {
-    res.status(500).json({ error: "Failed to add case" });
-  }
+  const newCase = new Case(req.body);
+  await newCase.save();
+  res.json(newCase);
 });
 
-// DELETE
-app.delete("/cases/:id", async (req, res) => {
-  try {
-    await Case.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch {
-    res.status(500).json({ error: "Delete failed" });
-  }
-});
-
-// UPDATE
 app.put("/cases/:id", async (req, res) => {
-  try {
-    const updated = await Case.findByIdAndUpdate(req.params.id, req.body, {
-      new: true
-    });
-    res.json(updated);
-  } catch {
-    res.status(500).json({ error: "Update failed" });
-  }
+  const updated = await Case.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(updated);
 });
 
-/* ================== SERVER ================== */
-app.listen(5000, () => {
-  console.log("Server running on port 5000 🚀");
+app.delete("/cases/:id", async (req, res) => {
+  await Case.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
+
+// ⚠️ IMPORTANT FOR RENDER
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
