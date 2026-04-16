@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function Dashboard() {
 
-  // ✅ LOAD FROM LOCALSTORAGE (FIXED)
-  const [cases, setCases] = useState(() => {
-    const saved = localStorage.getItem("cases");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [cases, setCases] = useState([]);
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
@@ -22,30 +18,34 @@ export default function Dashboard() {
     status: "Pending",
   });
 
-  const [editIndex, setEditIndex] = useState(null);
+  const [editId, setEditId] = useState(null);
 
-  // ✅ SAVE TO LOCALSTORAGE
+  // 🔥 FETCH FROM BACKEND
   useEffect(() => {
-    localStorage.setItem("cases", JSON.stringify(cases));
-  }, [cases]);
+    fetchCases();
+  }, []);
+
+  const fetchCases = async () => {
+    const res = await axios.get("http://localhost:5000/cases");
+    setCases(res.data);
+  };
 
   // ADD / UPDATE
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.caseNumber) {
       alert("Enter Case Number");
       return;
     }
 
-    if (editIndex !== null) {
-      const updated = [...cases];
-      updated[editIndex] = { ...form };
-      setCases(updated);
-      setEditIndex(null);
+    if (editId) {
+      await axios.put(`http://localhost:5000/cases/${editId}`, form);
+      setEditId(null);
     } else {
-      setCases((prev) => [...prev, { ...form }]);
+      await axios.post("http://localhost:5000/cases", form);
     }
 
-    // reset
+    fetchCases();
+
     setForm({
       caseNumber: "",
       petitioner: "",
@@ -60,21 +60,22 @@ export default function Dashboard() {
   };
 
   // EDIT
-  const editCase = (index) => {
-    setForm({ ...cases[index] });
-    setEditIndex(index);
+  const editCase = (c) => {
+    setForm({ ...c });
+    setEditId(c._id);
   };
 
   // DELETE
-  const deleteCase = (index) => {
+  const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
-    setCases((prev) => prev.filter((_, i) => i !== index));
+    await axios.delete(`http://localhost:5000/cases/${id}`);
+    fetchCases();
   };
 
-  // SEARCH FILTER
+  // SEARCH
   const filteredCases = cases.filter((c) =>
-    c.caseNumber.includes(search) ||
-    c.petitioner.toLowerCase().includes(search.toLowerCase())
+    c.caseNumber?.includes(search) ||
+    c.petitioner?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -95,126 +96,77 @@ export default function Dashboard() {
       {/* MAIN */}
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
 
-        <h2 style={{ marginBottom: "20px" }}>Dashboard</h2>
+        <h2>Dashboard</h2>
 
         {/* FORM */}
         <div style={cardStyle}>
-          <h3>{editIndex !== null ? "Edit Case" : "Add Case"}</h3>
+          <h3>{editId ? "Edit Case" : "Add Case"}</h3>
 
           <div style={gridStyle}>
-
-            {renderInput("Case Number", form.caseNumber, (val) =>
-              setForm((prev) => ({ ...prev, caseNumber: val }))
-            )}
-
-            {renderInput("Petitioner", form.petitioner, (val) =>
-              setForm((prev) => ({ ...prev, petitioner: val }))
-            )}
-
-            {renderInput("Respondent", form.respondent, (val) =>
-              setForm((prev) => ({ ...prev, respondent: val }))
-            )}
-
-            {renderInput("Case Type", form.type, (val) =>
-              setForm((prev) => ({ ...prev, type: val }))
-            )}
-
-            {renderInput("Advocate", form.advocate, (val) =>
-              setForm((prev) => ({ ...prev, advocate: val }))
-            )}
-
-            {renderInput("Year", form.year, (val) =>
-              setForm((prev) => ({ ...prev, year: val }))
-            )}
-
-            {renderInput("Phone", form.phone, (val) =>
-              setForm((prev) => ({ ...prev, phone: val }))
-            )}
-
-            {renderInput("Adjournment Date", form.date, (val) =>
-              setForm((prev) => ({ ...prev, date: val }))
-            )}
+            {renderInput("Case Number", form.caseNumber, (v)=>setForm({...form, caseNumber:v}))}
+            {renderInput("Petitioner", form.petitioner, (v)=>setForm({...form, petitioner:v}))}
+            {renderInput("Respondent", form.respondent, (v)=>setForm({...form, respondent:v}))}
+            {renderInput("Case Type", form.type, (v)=>setForm({...form, type:v}))}
+            {renderInput("Advocate", form.advocate, (v)=>setForm({...form, advocate:v}))}
+            {renderInput("Year", form.year, (v)=>setForm({...form, year:v}))}
+            {renderInput("Phone", form.phone, (v)=>setForm({...form, phone:v}))}
+            {renderInput("Adjournment Date", form.date, (v)=>setForm({...form, date:v}))}
 
             <div>
-              <label style={labelStyle}>Status</label>
+              <label>Status</label>
               <select
                 style={inputStyle}
                 value={form.status}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, status: e.target.value }))
-                }
+                onChange={(e)=>setForm({...form, status:e.target.value})}
               >
                 <option>Pending</option>
                 <option>Disposed</option>
               </select>
             </div>
-
           </div>
 
-          <button type="button" onClick={handleSubmit} style={submitBtn(editIndex)}>
-            {editIndex !== null ? "Update Case" : "+ Add Case"}
+          <button onClick={handleSubmit} style={submitBtn(editId)}>
+            {editId ? "Update Case" : "+ Add Case"}
           </button>
         </div>
 
         {/* SEARCH */}
         <input
-          placeholder="Search case..."
+          placeholder="Search..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "10px",
-            marginBottom: "10px",
-            width: "100%",
-            border: "1px solid #ccc",
-            borderRadius: "6px"
-          }}
+          onChange={(e)=>setSearch(e.target.value)}
+          style={{ padding:"10px", width:"100%", marginBottom:"10px" }}
         />
 
         {/* TABLE */}
         <div style={cardStyle}>
-          <table width="100%" style={{ borderCollapse: "collapse" }}>
+          <table width="100%">
             <thead>
-              <tr style={{ background: "#eee" }}>
+              <tr>
                 {["S.No","Case Number","Petitioner","Respondent","Type","Advocate","Year","Phone","Date","Status","Action"]
-                  .map((h,i)=>(<th key={i} style={headerCell}>{h}</th>))}
+                  .map((h,i)=>(<th key={i}>{h}</th>))}
               </tr>
             </thead>
 
             <tbody>
-              {filteredCases.length === 0 ? (
-                <tr>
-                  <td colSpan="11" style={{ textAlign: "center", padding: "15px" }}>
-                    No cases found
+              {filteredCases.map((c,i)=>(
+                <tr key={c._id}>
+                  <td>{i+1}</td>
+                  <td>{c.caseNumber}</td>
+                  <td>{c.petitioner}</td>
+                  <td>{c.respondent}</td>
+                  <td>{c.type}</td>
+                  <td>{c.advocate}</td>
+                  <td>{c.year}</td>
+                  <td>{c.phone}</td>
+                  <td>{c.date}</td>
+                  <td>{c.status}</td>
+                  <td>
+                    <button onClick={()=>editCase(c)}>Edit</button>
+                    <button onClick={()=>deleteCase(c._id)}>Delete</button>
                   </td>
                 </tr>
-              ) : (
-                filteredCases.map((c, i) => (
-                  <tr key={i}>
-                    <td style={cell}>{i+1}</td>
-                    <td style={cell}>{c.caseNumber}</td>
-                    <td style={cell}>{c.petitioner}</td>
-                    <td style={cell}>{c.respondent}</td>
-                    <td style={cell}>{c.type}</td>
-                    <td style={cell}>{c.advocate}</td>
-                    <td style={cell}>{c.year}</td>
-                    <td style={cell}>{c.phone}</td>
-                    <td style={cell}>{c.date}</td>
-
-                    <td style={{
-                      ...cell,
-                      color: c.status==="Pending"?"orange":"green",
-                      fontWeight:"bold"
-                    }}>
-                      {c.status}
-                    </td>
-
-                    <td style={cell}>
-                      <button onClick={()=>editCase(i)} style={editBtn}>Edit</button>
-                      <button onClick={()=>deleteCase(i)} style={deleteBtn}>Delete</button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -224,80 +176,38 @@ export default function Dashboard() {
   );
 }
 
-// ---------- INPUT ----------
+// ---------- HELPERS ----------
 const renderInput = (label, value, onChange) => (
   <div>
-    <label style={labelStyle}>{label}</label>
-    <input
-      style={inputStyle}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <label>{label}</label>
+    <input value={value} onChange={(e)=>onChange(e.target.value)} style={inputStyle}/>
   </div>
 );
 
-// ---------- STYLES ----------
+const inputStyle = {
+  padding:"8px",
+  border:"1px solid #ccc",
+  borderRadius:"5px",
+  width:"100%"
+};
+
 const cardStyle = {
   background:"white",
   padding:"20px",
-  borderRadius:"10px",
-  boxShadow:"0 4px 10px rgba(0,0,0,0.08)",
-  marginBottom:"20px"
+  marginBottom:"20px",
+  borderRadius:"10px"
 };
 
 const gridStyle = {
   display:"grid",
-  gridTemplateColumns:"repeat(auto-fit, minmax(200px,1fr))",
-  gap:"15px"
+  gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
+  gap:"10px"
 };
 
-const inputStyle = {
+const submitBtn = () => ({
+  marginTop:"10px",
   padding:"10px",
-  border:"1px solid #d1d5db",
-  borderRadius:"6px",
-  width:"100%"
-};
-
-const labelStyle = {
-  fontSize:"12px",
-  color:"#6b7280"
-};
-
-const cell = {
-  padding:"10px",
-  textAlign:"center"
-};
-
-const headerCell = {
-  padding:"10px",
-  textAlign:"center"
-};
-
-const editBtn = {
-  marginRight:"8px",
-  background:"#f59e0b",
+  background:"blue",
   color:"white",
-  border:"none",
-  padding:"5px 10px",
-  borderRadius:"5px",
-  cursor:"pointer"
-};
-
-const deleteBtn = {
-  background:"red",
-  color:"white",
-  border:"none",
-  padding:"5px 10px",
-  borderRadius:"5px",
-  cursor:"pointer"
-};
-
-const submitBtn = (editIndex) => ({
-  marginTop:"15px",
-  padding:"10px 20px",
-  background: editIndex!==null?"green":"#2563eb",
-  color:"white",
-  border:"none",
-  borderRadius:"6px",
-  cursor:"pointer"
+  border:"none"
 });
