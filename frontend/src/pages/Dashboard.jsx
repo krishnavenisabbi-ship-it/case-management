@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const BASE_URL = "https://case-management-dkgs.onrender.com";
+const BASE_URL = "http://localhost:5000"; // use Render URL later
 
 export default function Dashboard() {
 
@@ -27,16 +27,15 @@ export default function Dashboard() {
     fetchCases();
   }, []);
 
-const fetchCases = async () => {
-  const res = await axios.get(`${BASE_URL}/cases`);
-  setCases(res.data);
-};
+  const fetchCases = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/cases`);
+      setCases(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-await axios.post(`${BASE_URL}/cases`, form);
-
-await axios.put(`${BASE_URL}/cases/${editId}`, form);
-
-await axios.delete(`${BASE_URL}/cases/${id}`);
   // ADD / UPDATE
   const handleSubmit = async () => {
     if (!form.caseNumber) {
@@ -73,17 +72,7 @@ await axios.delete(`${BASE_URL}/cases/${id}`);
 
   // EDIT
   const editCase = (c) => {
-    setForm({
-      caseNumber: c.caseNumber,
-      petitioner: c.petitioner,
-      respondent: c.respondent,
-      type: c.type,
-      advocate: c.advocate,
-      year: c.year,
-      phone: c.phone,
-      date: c.date,
-      status: c.status,
-    });
+    setForm(c);
     setEditId(c._id);
   };
 
