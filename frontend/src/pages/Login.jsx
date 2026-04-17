@@ -1,19 +1,20 @@
 import { GoogleLogin } from "@react-oauth/google";
-import logo from "../assets/logo.png";   // ✅ THIS WAS MISSING
+import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 export default function Login() {
+
+  const navigate = useNavigate(); // ✅ ADD THIS
 
   const handleSuccess = (res) => {
     console.log("LOGIN SUCCESS", res);
     localStorage.setItem("user", JSON.stringify(res));
-    window.location.href = "/dashboard";
+
+    navigate("/dashboard"); // ✅ FIXED
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex"
-    }}>
+    <div style={{ minHeight: "100vh", display: "flex" }}>
 
       {/* LEFT SIDE */}
       <div style={{
@@ -35,7 +36,6 @@ export default function Login() {
         justifyContent: "center"
       }}>
 
-        {/* TOP LOGO */}
         <img src={logo} alt="logo" style={{ width: "100px", marginBottom: "10px" }} />
 
         <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
