@@ -4,6 +4,9 @@ import axios from "axios";
 const BASE_URL = "https://case-management-dkgs.onrender.com";
 
 export default function Dashboard() {
+
+  const token = localStorage.getItem("token");
+
   const [cases, setCases] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -21,6 +24,13 @@ export default function Dashboard() {
 
   const [editId, setEditId] = useState(null);
 
+  // 🔐 PROTECT DASHBOARD
+  useEffect(() => {
+    if (!token) {
+      window.location.href = "/";
+    }
+  }, []);
+
   // FETCH DATA
   useEffect(() => {
     fetchCases();
@@ -28,7 +38,11 @@ export default function Dashboard() {
 
   const fetchCases = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/cases`);
+      const res = await axios.get(`${BASE_URL}/api/cases`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setCases(res.data);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -44,10 +58,18 @@ export default function Dashboard() {
 
     try {
       if (editId) {
-        await axios.put(`${BASE_URL}/api/cases/${editId}`, form);
+        await axios.put(`${BASE_URL}/api/cases/${editId}`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setEditId(null);
       } else {
-        await axios.post(`${BASE_URL}/api/cases`, form);
+        await axios.post(`${BASE_URL}/api/cases`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
       }
 
       fetchCases();
@@ -81,7 +103,11 @@ export default function Dashboard() {
     if (!window.confirm("Delete this case?")) return;
 
     try {
-      await axios.delete(`${BASE_URL}/api/cases/${id}`);
+      await axios.delete(`${BASE_URL}/api/cases/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchCases();
     } catch (err) {
       console.error("Delete error:", err);

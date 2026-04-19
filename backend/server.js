@@ -1,23 +1,26 @@
 import dotenv from "dotenv";
 dotenv.config();
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import jwt from "jsonwebtoken";
 
 import Case from "./models/Case.js";
+import { verifyToken } from "./middleware/auth.js";
 
 const app = express();
 
-// Middleware
+// ===============================
+// MIDDLEWARE
+// ===============================
 app.use(cors({
-  origin: "app.use(cors({
-  origin: "https://case-management-frontend.vercel.app"
-}));
+  origin: "https://yourcase.in" // 🔁 replace with your Vercel domain
 }));
 app.use(express.json());
 
 // ===============================
-// MongoDB Connection (CORRECT)
+// MONGODB CONNECTION
 // ===============================
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
@@ -27,16 +30,37 @@ mongoose.connect(process.env.MONGO_URI)
   });
 
 // ===============================
-// Routes
+// TEST ROUTE
 // ===============================
-
-// Test route
 app.get("/", (req, res) => {
   res.send("Backend running ✅");
 });
 
-// Get all cases
-app.get("/api/cases", async (req, res) => {
+// ===============================
+// AUTH ROUTE (NO TOKEN REQUIRED)
+// ===============================
+app.post("/api/auth/google", (req, res) => {
+  const { email, name } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email required" });
+  }
+
+  const token = jwt.sign(
+    { email, name },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  res.json({ token });
+});
+
+// ===============================
+// PROTECTED ROUTES (REQUIRE TOKEN)
+// ===============================
+
+// GET ALL CASES
+app.get("/api/cases", verifyToken, async (req, res) => {
   try {
     const cases = await Case.find().sort({ createdAt: -1 });
     res.json(cases);
@@ -45,8 +69,8 @@ app.get("/api/cases", async (req, res) => {
   }
 });
 
-// Add case
-app.post("/api/cases", async (req, res) => {
+// CREATE CASE
+app.post("/api/cases", verifyToken, async (req, res) => {
   try {
     const newCase = new Case(req.body);
     const savedCase = await newCase.save();
@@ -56,8 +80,8 @@ app.post("/api/cases", async (req, res) => {
   }
 });
 
-// Update case
-app.put("/api/cases/:id", async (req, res) => {
+// UPDATE CASE
+app.put("/api/cases/:id", verifyToken, async (req, res) => {
   try {
     const updated = await Case.findByIdAndUpdate(
       req.params.id,
@@ -70,8 +94,8 @@ app.put("/api/cases/:id", async (req, res) => {
   }
 });
 
-// Delete case
-app.delete("/api/cases/:id", async (req, res) => {
+// DELETE CASE
+app.delete("/api/cases/:id", verifyToken, async (req, res) => {
   try {
     await Case.findByIdAndDelete(req.params.id);
     res.json({ message: "Case deleted" });
@@ -81,7 +105,7 @@ app.delete("/api/cases/:id", async (req, res) => {
 });
 
 // ===============================
-// Server Start
+// SERVER START
 // ===============================
 const PORT = process.env.PORT || 5000;
 
