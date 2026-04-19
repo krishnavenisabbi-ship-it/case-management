@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000"; // use Render URL later
+const BASE_URL = " https://case-management-dkgs.onrender.com"  // use Render URL later
 
 export default function Dashboard() {
 
@@ -225,6 +225,7 @@ const renderInput = (label, value, onChange) => (
   </div>
 );
 
+const inputStyle = {
 const inputStyle = {
   padding:"8px",
   border:"1px solid #ccc",

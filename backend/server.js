@@ -9,7 +9,11 @@ import Case from "./models/Case.js";
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "app.use(cors({
+  origin: "https://case-management-frontend.vercel.app"
+}));
+}));
 app.use(express.json());
 
 // ===============================
