@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const BASE_URL = " https://case-management-dkgs.onrender.com"  // use Render URL later
+const BASE_URL = "https://case-management-dkgs.onrender.com";
 
 export default function Dashboard() {
-
   const [cases, setCases] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -32,7 +31,7 @@ export default function Dashboard() {
       const res = await axios.get(`${BASE_URL}/api/cases`);
       setCases(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error:", err);
     }
   };
 
@@ -66,7 +65,8 @@ export default function Dashboard() {
       });
 
     } catch (err) {
-      console.error(err);
+      console.error("Submit error:", err);
+      alert("Failed to save case");
     }
   };
 
@@ -84,7 +84,7 @@ export default function Dashboard() {
       await axios.delete(`${BASE_URL}/api/cases/${id}`);
       fetchCases();
     } catch (err) {
-      console.error(err);
+      console.error("Delete error:", err);
     }
   };
 
@@ -225,7 +225,6 @@ const renderInput = (label, value, onChange) => (
   </div>
 );
 
-const inputStyle = {
 const inputStyle = {
   padding:"8px",
   border:"1px solid #ccc",
