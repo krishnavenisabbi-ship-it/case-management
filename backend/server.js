@@ -14,9 +14,25 @@ const app = express();
 // ===============================
 // MIDDLEWARE
 // ===============================
+const allowedOrigins = [
+  "https://yourcase.in",                 // your custom domain (if any)
+  "https://case-management-dkgs.onrender.com", // your frontend URL
+  "http://localhost:5173"               // local dev
+];
+
 app.use(cors({
-  origin: "https://yourcase.in" // 🔁 replace with your Vercel domain
+  origin: function (origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  }
 }));
+
 app.use(express.json());
 
 // ===============================
@@ -25,12 +41,12 @@ app.use(express.json());
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
   .catch((err) => {
-    console.log("MongoDB Error ❌", err);
+    console.error("MongoDB Error ❌", err);
     process.exit(1);
   });
 
 // ===============================
-// TEST ROUTE
+// HEALTH CHECK
 // ===============================
 app.get("/", (req, res) => {
   res.send("Backend running ✅");
@@ -40,23 +56,33 @@ app.get("/", (req, res) => {
 // AUTH ROUTE (NO TOKEN REQUIRED)
 // ===============================
 app.post("/api/auth/google", (req, res) => {
-  const { email, name } = req.body;
+  try {
+    const { email, name } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: "Email required" });
+    if (!email) {
+      return res.status(400).json({ message: "Email required" });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET missing on server" });
+    }
+
+    const token = jwt.sign(
+      { email, name },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token });
+
+  } catch (err) {
+    console.error("Auth error:", err);
+    res.status(500).json({ message: "Auth failed" });
   }
-
-  const token = jwt.sign(
-    { email, name },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  res.json({ token });
 });
 
 // ===============================
-// PROTECTED ROUTES (REQUIRE TOKEN)
+// PROTECTED ROUTES
 // ===============================
 
 // GET ALL CASES
