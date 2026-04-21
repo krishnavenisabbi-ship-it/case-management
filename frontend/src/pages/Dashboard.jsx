@@ -16,19 +16,18 @@ export default function Dashboard() {
     respondent: "",
     type: "",
     advocate: "",
-    year: "",
     phone: "",
-    date: "",
+    day: "",
+    month: "",
+    year: "",
     status: "Pending",
   });
 
   const [editId, setEditId] = useState(null);
 
-  // 🔐 Protect dashboard
+  // 🔐 Protect route
   useEffect(() => {
-    if (!token) {
-      window.location.href = "/";
-    }
+    if (!token) window.location.href = "/";
   }, []);
 
   // Fetch cases
@@ -47,21 +46,35 @@ export default function Dashboard() {
     }
   };
 
-  // Add / Update case
+  // Convert dropdown to date
+  const getFormattedDate = () => {
+    if (!form.year || !form.month || !form.day) return "";
+    return `${form.year}-${String(form.month).padStart(2,"0")}-${String(form.day).padStart(2,"0")}`;
+  };
+
+  // Submit
   const handleSubmit = async () => {
     if (!form.caseNumber) {
       alert("Enter Case Number");
       return;
     }
 
+    const formattedDate = getFormattedDate();
+
     try {
       if (editId) {
-        await axios.put(`${BASE_URL}/api/cases/${editId}`, form, {
+        await axios.put(`${BASE_URL}/api/cases/${editId}`, {
+          ...form,
+          date: formattedDate
+        }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setEditId(null);
       } else {
-        await axios.post(`${BASE_URL}/api/cases`, form, {
+        await axios.post(`${BASE_URL}/api/cases`, {
+          ...form,
+          date: formattedDate
+        }, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -74,20 +87,29 @@ export default function Dashboard() {
         respondent: "",
         type: "",
         advocate: "",
-        year: "",
         phone: "",
-        date: "",
+        day: "",
+        month: "",
+        year: "",
         status: "Pending",
       });
 
-    } catch (err) {
+    } catch {
       alert("Error saving case");
     }
   };
 
   // Edit
   const editCase = (c) => {
-    setForm(c);
+    let d = new Date(c.date);
+
+    setForm({
+      ...c,
+      day: d.getDate(),
+      month: d.getMonth() + 1,
+      year: d.getFullYear()
+    });
+
     setEditId(c._id);
   };
 
@@ -112,7 +134,7 @@ export default function Dashboard() {
   };
 
   // Filter
-  const filteredCases = cases.filter((c) =>
+  const filteredCases = cases.filter(c =>
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
   );
@@ -123,7 +145,6 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div style={{ width: "220px", background: "#111", color: "white", padding: "20px" }}>
         <h2>⚖️ CMS</h2>
-        <p>Dashboard</p>
 
         <button onClick={handleLogout} style={logoutBtn}>
           Logout
@@ -140,23 +161,39 @@ export default function Dashboard() {
           <h3>{editId ? "Edit Case" : "Add Case"}</h3>
 
           <div style={gridStyle}>
-            {input("Case Number", form.caseNumber, v => setForm({...form, caseNumber:v}))}
-            {input("Petitioner", form.petitioner, v => setForm({...form, petitioner:v}))}
-            {input("Respondent", form.respondent, v => setForm({...form, respondent:v}))}
-            {input("Type", form.type, v => setForm({...form, type:v}))}
-            {input("Advocate", form.advocate, v => setForm({...form, advocate:v}))}
-            {input("Year", form.year, v => setForm({...form, year:v}))}
-            {input("Phone", form.phone, v => setForm({...form, phone:v}))}
+            {input("Case Number", form.caseNumber, v=>setForm({...form, caseNumber:v}))}
+            {input("Petitioner", form.petitioner, v=>setForm({...form, petitioner:v}))}
+            {input("Respondent", form.respondent, v=>setForm({...form, respondent:v}))}
+            {input("Type", form.type, v=>setForm({...form, type:v}))}
+            {input("Advocate", form.advocate, v=>setForm({...form, advocate:v}))}
+            {input("Phone", form.phone, v=>setForm({...form, phone:v}))}
 
-            {/* 📅 CALENDAR FIELD */}
+            {/* 📅 CUSTOM DATE DROPDOWN */}
             <div>
-              <label>Next Hearing Date</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e)=>setForm({...form, date:e.target.value})}
-                style={inputStyle}
-              />
+              <label>Date</label>
+
+              <div style={{ display:"flex", gap:"10px" }}>
+                <select value={form.day} onChange={(e)=>setForm({...form, day:e.target.value})} style={inputStyle}>
+                  <option value="">Day</option>
+                  {[...Array(31)].map((_,i)=>(
+                    <option key={i+1} value={i+1}>{i+1}</option>
+                  ))}
+                </select>
+
+                <select value={form.month} onChange={(e)=>setForm({...form, month:e.target.value})} style={inputStyle}>
+                  <option value="">Month</option>
+                  {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
+                    <option key={i} value={i+1}>{m}</option>
+                  ))}
+                </select>
+
+                <select value={form.year} onChange={(e)=>setForm({...form, year:e.target.value})} style={inputStyle}>
+                  <option value="">Year</option>
+                  {Array.from({length: 10}, (_,i)=>2024+i).map(y=>(
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <select
@@ -170,7 +207,7 @@ export default function Dashboard() {
           </div>
 
           <button onClick={handleSubmit} style={submitBtn(editId)}>
-            {editId ? "Update Case" : "+ Add Case"}
+            {editId ? "Update" : "Add Case"}
           </button>
         </div>
 
@@ -220,7 +257,7 @@ export default function Dashboard() {
 }
 
 // helpers
-const input = (label, value, onChange) => (
+const input = (label,value,onChange)=>(
   <div>
     <label>{label}</label>
     <input value={value} onChange={(e)=>onChange(e.target.value)} style={inputStyle}/>
@@ -257,7 +294,7 @@ const logoutBtn = {
   borderRadius:"5px"
 };
 
-const submitBtn = (editId) => ({
+const submitBtn = (editId)=>({
   marginTop:"10px",
   padding:"10px",
   background: editId ? "green" : "blue",
