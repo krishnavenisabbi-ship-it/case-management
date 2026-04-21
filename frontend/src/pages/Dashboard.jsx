@@ -31,7 +31,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // FETCH DATA
+  // FETCH CASES
   useEffect(() => {
     fetchCases();
   }, []);
@@ -39,13 +39,11 @@ export default function Dashboard() {
   const fetchCases = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/cases`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setCases(res.data);
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error(err);
     }
   };
 
@@ -59,16 +57,12 @@ export default function Dashboard() {
     try {
       if (editId) {
         await axios.put(`${BASE_URL}/api/cases/${editId}`, form, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
         setEditId(null);
       } else {
         await axios.post(`${BASE_URL}/api/cases`, form, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
       }
 
@@ -87,8 +81,7 @@ export default function Dashboard() {
       });
 
     } catch (err) {
-      console.error("Submit error:", err);
-      alert("Failed to save case");
+      alert("Error saving case");
     }
   };
 
@@ -104,17 +97,23 @@ export default function Dashboard() {
 
     try {
       await axios.delete(`${BASE_URL}/api/cases/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       fetchCases();
     } catch (err) {
-      console.error("Delete error:", err);
+      alert("Delete failed");
     }
   };
 
-  // SEARCH
+  // 🔓 LOGOUT FUNCTION
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    }
+  };
+
+  // SEARCH FILTER
   const filteredCases = cases.filter((c) =>
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
@@ -138,6 +137,23 @@ export default function Dashboard() {
         <h2>⚖️ CMS</h2>
         <p>Dashboard</p>
         <p>Add Case</p>
+
+        {/* 🔓 LOGOUT BUTTON */}
+        <button
+          onClick={handleLogout}
+          style={{
+            marginTop: "20px",
+            padding: "10px",
+            width: "100%",
+            background: "red",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer"
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       {/* MAIN */}
@@ -157,30 +173,27 @@ export default function Dashboard() {
           <h3>{editId ? "Edit Case" : "Add Case"}</h3>
 
           <div style={gridStyle}>
-            {renderInput("Case Number", form.caseNumber, (v)=>setForm({...form, caseNumber:v}))}
-            {renderInput("Petitioner", form.petitioner, (v)=>setForm({...form, petitioner:v}))}
-            {renderInput("Respondent", form.respondent, (v)=>setForm({...form, respondent:v}))}
-            {renderInput("Case Type", form.type, (v)=>setForm({...form, type:v}))}
-            {renderInput("Advocate", form.advocate, (v)=>setForm({...form, advocate:v}))}
-            {renderInput("Year", form.year, (v)=>setForm({...form, year:v}))}
-            {renderInput("Phone", form.phone, (v)=>setForm({...form, phone:v}))}
-            {renderInput("Adjournment Date", form.date, (v)=>setForm({...form, date:v}))}
+            {input("Case Number", form.caseNumber, v => setForm({...form, caseNumber:v}))}
+            {input("Petitioner", form.petitioner, v => setForm({...form, petitioner:v}))}
+            {input("Respondent", form.respondent, v => setForm({...form, respondent:v}))}
+            {input("Type", form.type, v => setForm({...form, type:v}))}
+            {input("Advocate", form.advocate, v => setForm({...form, advocate:v}))}
+            {input("Year", form.year, v => setForm({...form, year:v}))}
+            {input("Phone", form.phone, v => setForm({...form, phone:v}))}
+            {input("Date", form.date, v => setForm({...form, date:v}))}
 
-            <div>
-              <label>Status</label>
-              <select
-                style={inputStyle}
-                value={form.status}
-                onChange={(e)=>setForm({...form, status:e.target.value})}
-              >
-                <option>Pending</option>
-                <option>Disposed</option>
-              </select>
-            </div>
+            <select
+              value={form.status}
+              onChange={(e)=>setForm({...form, status:e.target.value})}
+              style={inputStyle}
+            >
+              <option>Pending</option>
+              <option>Disposed</option>
+            </select>
           </div>
 
           <button onClick={handleSubmit} style={submitBtn(editId)}>
-            {editId ? "Update Case" : "+ Add Case"}
+            {editId ? "Update" : "Add Case"}
           </button>
         </div>
 
@@ -189,12 +202,7 @@ export default function Dashboard() {
           placeholder="Search..."
           value={search}
           onChange={(e)=>setSearch(e.target.value)}
-          style={{
-            padding:"10px",
-            width:"100%",
-            marginBottom:"10px",
-            borderRadius:"6px"
-          }}
+          style={{ padding:"10px", width:"100%", marginBottom:"10px" }}
         />
 
         {/* TABLE */}
@@ -202,38 +210,26 @@ export default function Dashboard() {
           <table width="100%">
             <thead>
               <tr>
-                {["S.No","Case Number","Petitioner","Respondent","Type","Advocate","Year","Phone","Date","Status","Action"]
-                  .map((h,i)=>(<th key={i}>{h}</th>))}
+                <th>#</th>
+                <th>Case</th>
+                <th>Petitioner</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
-
             <tbody>
-              {filteredCases.length === 0 ? (
-                <tr>
-                  <td colSpan="11" style={{ textAlign:"center", padding:"15px" }}>
-                    No cases found
+              {filteredCases.map((c,i)=>(
+                <tr key={c._id}>
+                  <td>{i+1}</td>
+                  <td>{c.caseNumber}</td>
+                  <td>{c.petitioner}</td>
+                  <td>{c.status}</td>
+                  <td>
+                    <button onClick={()=>editCase(c)}>Edit</button>
+                    <button onClick={()=>deleteCase(c._id)}>Delete</button>
                   </td>
                 </tr>
-              ) : (
-                filteredCases.map((c,i)=>(
-                  <tr key={c._id}>
-                    <td>{i+1}</td>
-                    <td>{c.caseNumber}</td>
-                    <td>{c.petitioner}</td>
-                    <td>{c.respondent}</td>
-                    <td>{c.type}</td>
-                    <td>{c.advocate}</td>
-                    <td>{c.year}</td>
-                    <td>{c.phone}</td>
-                    <td>{c.date}</td>
-                    <td>{c.status}</td>
-                    <td>
-                      <button onClick={()=>editCase(c)}>Edit</button>
-                      <button onClick={()=>deleteCase(c._id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -243,8 +239,8 @@ export default function Dashboard() {
   );
 }
 
-// HELPERS
-const renderInput = (label, value, onChange) => (
+// UI helpers
+const input = (label, value, onChange) => (
   <div>
     <label>{label}</label>
     <input value={value} onChange={(e)=>onChange(e.target.value)} style={inputStyle}/>
