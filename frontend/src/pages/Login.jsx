@@ -1,5 +1,6 @@
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
+import logo from "../assets/logo.png";
 
 const BASE_URL = "https://case-management-dkgs.onrender.com";
 
