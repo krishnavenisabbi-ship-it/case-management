@@ -24,14 +24,14 @@ export default function Dashboard() {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔐 PROTECT DASHBOARD
+  // 🔐 Protect dashboard
   useEffect(() => {
     if (!token) {
       window.location.href = "/";
     }
   }, []);
 
-  // FETCH CASES
+  // Fetch cases
   useEffect(() => {
     fetchCases();
   }, []);
@@ -47,7 +47,7 @@ export default function Dashboard() {
     }
   };
 
-  // ADD / UPDATE
+  // Add / Update case
   const handleSubmit = async () => {
     if (!form.caseNumber) {
       alert("Enter Case Number");
@@ -85,13 +85,13 @@ export default function Dashboard() {
     }
   };
 
-  // EDIT
+  // Edit
   const editCase = (c) => {
     setForm(c);
     setEditId(c._id);
   };
 
-  // DELETE
+  // Delete
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
 
@@ -100,75 +100,42 @@ export default function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchCases();
-    } catch (err) {
+    } catch {
       alert("Delete failed");
     }
   };
 
-  // 🔓 LOGOUT FUNCTION
+  // Logout
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem("token");
-      window.location.href = "/";
-    }
+    localStorage.removeItem("token");
+    window.location.href = "/";
   };
 
-  // SEARCH FILTER
+  // Filter
   const filteredCases = cases.filter((c) =>
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // STATS
-  const total = cases.length;
-  const pending = cases.filter(c => c.status === "Pending").length;
-  const disposed = cases.filter(c => c.status === "Disposed").length;
-
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
 
-      {/* SIDEBAR */}
-      <div style={{
-        width: "220px",
-        background: "#111",
-        color: "white",
-        padding: "20px"
-      }}>
+      {/* Sidebar */}
+      <div style={{ width: "220px", background: "#111", color: "white", padding: "20px" }}>
         <h2>⚖️ CMS</h2>
         <p>Dashboard</p>
-        <p>Add Case</p>
 
-        {/* 🔓 LOGOUT BUTTON */}
-        <button
-          onClick={handleLogout}
-          style={{
-            marginTop: "20px",
-            padding: "10px",
-            width: "100%",
-            background: "red",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer"
-          }}
-        >
+        <button onClick={handleLogout} style={logoutBtn}>
           Logout
         </button>
       </div>
 
-      {/* MAIN */}
+      {/* Main */}
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
 
         <h2>Dashboard</h2>
 
-        {/* STATS */}
-        <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-          <div style={statCard}>Total: {total}</div>
-          <div style={statCard}>Pending: {pending}</div>
-          <div style={statCard}>Disposed: {disposed}</div>
-        </div>
-
-        {/* FORM */}
+        {/* Form */}
         <div style={cardStyle}>
           <h3>{editId ? "Edit Case" : "Add Case"}</h3>
 
@@ -180,7 +147,17 @@ export default function Dashboard() {
             {input("Advocate", form.advocate, v => setForm({...form, advocate:v}))}
             {input("Year", form.year, v => setForm({...form, year:v}))}
             {input("Phone", form.phone, v => setForm({...form, phone:v}))}
-            {input("Date", form.date, v => setForm({...form, date:v}))}
+
+            {/* 📅 CALENDAR FIELD */}
+            <div>
+              <label>Next Hearing Date</label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e)=>setForm({...form, date:e.target.value})}
+                style={inputStyle}
+              />
+            </div>
 
             <select
               value={form.status}
@@ -193,11 +170,11 @@ export default function Dashboard() {
           </div>
 
           <button onClick={handleSubmit} style={submitBtn(editId)}>
-            {editId ? "Update" : "Add Case"}
+            {editId ? "Update Case" : "+ Add Case"}
           </button>
         </div>
 
-        {/* SEARCH */}
+        {/* Search */}
         <input
           placeholder="Search..."
           value={search}
@@ -205,7 +182,7 @@ export default function Dashboard() {
           style={{ padding:"10px", width:"100%", marginBottom:"10px" }}
         />
 
-        {/* TABLE */}
+        {/* Table */}
         <div style={cardStyle}>
           <table width="100%">
             <thead>
@@ -213,16 +190,19 @@ export default function Dashboard() {
                 <th>#</th>
                 <th>Case</th>
                 <th>Petitioner</th>
+                <th>Date</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredCases.map((c,i)=>(
                 <tr key={c._id}>
                   <td>{i+1}</td>
                   <td>{c.caseNumber}</td>
                   <td>{c.petitioner}</td>
+                  <td>{c.date}</td>
                   <td>{c.status}</td>
                   <td>
                     <button onClick={()=>editCase(c)}>Edit</button>
@@ -239,7 +219,7 @@ export default function Dashboard() {
   );
 }
 
-// UI helpers
+// helpers
 const input = (label, value, onChange) => (
   <div>
     <label>{label}</label>
@@ -267,11 +247,14 @@ const gridStyle = {
   gap:"10px"
 };
 
-const statCard = {
-  background:"white",
-  padding:"15px",
-  borderRadius:"10px",
-  fontWeight:"bold"
+const logoutBtn = {
+  marginTop:"20px",
+  padding:"10px",
+  width:"100%",
+  background:"red",
+  color:"white",
+  border:"none",
+  borderRadius:"5px"
 };
 
 const submitBtn = (editId) => ({
