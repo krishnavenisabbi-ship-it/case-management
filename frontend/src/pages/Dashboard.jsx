@@ -27,9 +27,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!token) window.location.href = "/";
-  }, []);
-
-  useEffect(() => {
     fetchCases();
   }, []);
 
@@ -44,22 +41,31 @@ export default function Dashboard() {
     }
   };
 
-  // ✅ SAVE FORMAT (YYYY-MM-DD for DB)
+  // ✅ SAVE DATE
   const getFormattedDate = () => {
-    if (!form.year || !form.month || !form.day) return "";
+    if (!form.day || !form.month || !form.year) return "";
     return `${form.year}-${String(form.month).padStart(2,"0")}-${String(form.day).padStart(2,"0")}`;
   };
 
-  // ✅ DISPLAY FORMAT (DD-MM-YYYY for UI)
+  // ✅ DISPLAY DATE
   const formatDisplayDate = (date) => {
-    if (!date) return "";
+    if (!date) return "No Date";
     const d = new Date(date);
+    if (isNaN(d)) return "Invalid Date";
+
     return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
   };
 
   const handleSubmit = async () => {
+
     if (!form.caseNumber) {
       alert("Enter Case Number");
+      return;
+    }
+
+    // ✅ VALIDATION
+    if (!form.day || !form.month || !form.year) {
+      alert("Please select full date");
       return;
     }
 
@@ -103,7 +109,7 @@ export default function Dashboard() {
     }
   };
 
-  // ✅ FIX EDIT MODE DATE
+  // ✅ EDIT
   const editCase = (c) => {
     if (!c.date) return;
 
@@ -119,6 +125,7 @@ export default function Dashboard() {
     setEditId(c._id);
   };
 
+  // DELETE
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
 
@@ -132,6 +139,7 @@ export default function Dashboard() {
     }
   };
 
+  // LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
@@ -145,16 +153,15 @@ export default function Dashboard() {
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <div style={{ width: "220px", background: "#111", color: "white", padding: "20px" }}>
         <h2>⚖️ CMS</h2>
-
         <button onClick={handleLogout} style={logoutBtn}>
           Logout
         </button>
       </div>
 
-      {/* Main */}
+      {/* MAIN */}
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
 
         <h2>Dashboard</h2>
@@ -171,10 +178,9 @@ export default function Dashboard() {
             {input("Advocate", form.advocate, v=>setForm({...form, advocate:v}))}
             {input("Phone", form.phone, v=>setForm({...form, phone:v}))}
 
-            {/* 📅 DATE DROPDOWN */}
+            {/* ✅ DATE DROPDOWN ONLY */}
             <div>
               <label>Date</label>
-
               <div style={{ display:"flex", gap:"10px" }}>
                 <select value={form.day} onChange={(e)=>setForm({...form, day:e.target.value})}>
                   <option value="">Day</option>
