@@ -8,10 +8,10 @@ export default function Login() {
 
   const handleSuccess = async (res) => {
     try {
-      // Decode Google JWT credential
+      // Decode Google credential
       const user = JSON.parse(atob(res.credential.split(".")[1]));
 
-      // Send to backend
+      // Send user data to backend
       const response = await axios.post(
         `${BASE_URL}/api/auth/google`,
         {
@@ -20,10 +20,10 @@ export default function Login() {
         }
       );
 
-      // Store token
+      // Save token
       localStorage.setItem("token", response.data.token);
 
-      // Redirect
+      // Redirect to dashboard
       window.location.href = "/dashboard";
 
     } catch (err) {
@@ -46,7 +46,7 @@ export default function Login() {
         alignItems: "center",
         justifyContent: "center"
       }}>
-        <img src="/logo.png" alt="logo" style={{ width: "250px" }} />
+        <img src={logo} alt="logo" style={{ width: "250px" }} />
       </div>
 
       {/* RIGHT SIDE */}
@@ -59,7 +59,7 @@ export default function Login() {
       }}>
 
         {/* TOP LOGO */}
-        <img src="/logo.png" alt="logo" style={{ width: "100px", marginBottom: "10px" }} />
+        <img src={logo} alt="logo" style={{ width: "100px", marginBottom: "10px" }} />
 
         <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
           CASE MANAGEMENT
