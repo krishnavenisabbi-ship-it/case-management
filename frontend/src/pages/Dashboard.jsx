@@ -1,11 +1,10 @@
+<h1 style={{color:"red"}}>NEW VERSION</h1>
 import { useState, useEffect } from "react";
 import axios from "axios";
 
 const BASE_URL = "https://case-management-dkgs.onrender.com";
 
 export default function Dashboard() {
-
-  const token = localStorage.getItem("token");
 
   const [cases, setCases] = useState([]);
   const [search, setSearch] = useState("");
@@ -25,12 +24,22 @@ export default function Dashboard() {
 
   const [editId, setEditId] = useState(null);
 
+  // ✅ AUTH CHECK + LOAD DATA
   useEffect(() => {
-    if (!token) window.location.href = "/";
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+
     fetchCases();
   }, []);
 
+  // ✅ FETCH CASES
   const fetchCases = async () => {
+    const token = localStorage.getItem("token");
+
     try {
       const res = await axios.get(`${BASE_URL}/api/cases`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -56,6 +65,7 @@ export default function Dashboard() {
     return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
   };
 
+  // ✅ ADD / UPDATE CASE
   const handleSubmit = async () => {
 
     if (!form.caseNumber) {
@@ -63,13 +73,13 @@ export default function Dashboard() {
       return;
     }
 
-    // ✅ VALIDATION
     if (!form.day || !form.month || !form.year) {
       alert("Please select full date");
       return;
     }
 
     const formattedDate = getFormattedDate();
+    const token = localStorage.getItem("token");
 
     try {
       if (editId) {
@@ -109,7 +119,7 @@ export default function Dashboard() {
     }
   };
 
-  // ✅ EDIT
+  // ✅ EDIT CASE
   const editCase = (c) => {
     if (!c.date) return;
 
@@ -125,9 +135,11 @@ export default function Dashboard() {
     setEditId(c._id);
   };
 
-  // DELETE
+  // ✅ DELETE CASE
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
+
+    const token = localStorage.getItem("token");
 
     try {
       await axios.delete(`${BASE_URL}/api/cases/${id}`, {
@@ -139,12 +151,13 @@ export default function Dashboard() {
     }
   };
 
-  // LOGOUT
+  // ✅ LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
   };
 
+  // ✅ SEARCH FILTER
   const filteredCases = cases.filter(c =>
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
@@ -178,7 +191,7 @@ export default function Dashboard() {
             {input("Advocate", form.advocate, v=>setForm({...form, advocate:v}))}
             {input("Phone", form.phone, v=>setForm({...form, phone:v}))}
 
-            {/* ✅ DATE DROPDOWN ONLY */}
+            {/* ✅ DATE DROPDOWN */}
             <div>
               <label>Date</label>
               <div style={{ display:"flex", gap:"10px" }}>
