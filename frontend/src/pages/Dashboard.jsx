@@ -25,12 +25,10 @@ export default function Dashboard() {
 
   const [editId, setEditId] = useState(null);
 
-  // 🔐 Protect route
   useEffect(() => {
     if (!token) window.location.href = "/";
   }, []);
 
-  // Fetch cases
   useEffect(() => {
     fetchCases();
   }, []);
@@ -46,13 +44,19 @@ export default function Dashboard() {
     }
   };
 
-  // Convert dropdown to date
+  // ✅ SAVE FORMAT (YYYY-MM-DD for DB)
   const getFormattedDate = () => {
     if (!form.year || !form.month || !form.day) return "";
     return `${form.year}-${String(form.month).padStart(2,"0")}-${String(form.day).padStart(2,"0")}`;
   };
 
-  // Submit
+  // ✅ DISPLAY FORMAT (DD-MM-YYYY for UI)
+  const formatDisplayDate = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
+  };
+
   const handleSubmit = async () => {
     if (!form.caseNumber) {
       alert("Enter Case Number");
@@ -99,9 +103,11 @@ export default function Dashboard() {
     }
   };
 
-  // Edit
+  // ✅ FIX EDIT MODE DATE
   const editCase = (c) => {
-    let d = new Date(c.date);
+    if (!c.date) return;
+
+    const d = new Date(c.date);
 
     setForm({
       ...c,
@@ -113,7 +119,6 @@ export default function Dashboard() {
     setEditId(c._id);
   };
 
-  // Delete
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
 
@@ -127,13 +132,11 @@ export default function Dashboard() {
     }
   };
 
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
   };
 
-  // Filter
   const filteredCases = cases.filter(c =>
     c.caseNumber?.includes(search) ||
     c.petitioner?.toLowerCase().includes(search.toLowerCase())
@@ -156,7 +159,7 @@ export default function Dashboard() {
 
         <h2>Dashboard</h2>
 
-        {/* Form */}
+        {/* FORM */}
         <div style={cardStyle}>
           <h3>{editId ? "Edit Case" : "Add Case"}</h3>
 
@@ -168,26 +171,26 @@ export default function Dashboard() {
             {input("Advocate", form.advocate, v=>setForm({...form, advocate:v}))}
             {input("Phone", form.phone, v=>setForm({...form, phone:v}))}
 
-            {/* 📅 CUSTOM DATE DROPDOWN */}
+            {/* 📅 DATE DROPDOWN */}
             <div>
               <label>Date</label>
 
               <div style={{ display:"flex", gap:"10px" }}>
-                <select value={form.day} onChange={(e)=>setForm({...form, day:e.target.value})} style={inputStyle}>
+                <select value={form.day} onChange={(e)=>setForm({...form, day:e.target.value})}>
                   <option value="">Day</option>
                   {[...Array(31)].map((_,i)=>(
                     <option key={i+1} value={i+1}>{i+1}</option>
                   ))}
                 </select>
 
-                <select value={form.month} onChange={(e)=>setForm({...form, month:e.target.value})} style={inputStyle}>
+                <select value={form.month} onChange={(e)=>setForm({...form, month:e.target.value})}>
                   <option value="">Month</option>
                   {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>(
                     <option key={i} value={i+1}>{m}</option>
                   ))}
                 </select>
 
-                <select value={form.year} onChange={(e)=>setForm({...form, year:e.target.value})} style={inputStyle}>
+                <select value={form.year} onChange={(e)=>setForm({...form, year:e.target.value})}>
                   <option value="">Year</option>
                   {Array.from({length: 10}, (_,i)=>2024+i).map(y=>(
                     <option key={y} value={y}>{y}</option>
@@ -199,7 +202,6 @@ export default function Dashboard() {
             <select
               value={form.status}
               onChange={(e)=>setForm({...form, status:e.target.value})}
-              style={inputStyle}
             >
               <option>Pending</option>
               <option>Disposed</option>
@@ -211,7 +213,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Search */}
+        {/* SEARCH */}
         <input
           placeholder="Search..."
           value={search}
@@ -219,7 +221,7 @@ export default function Dashboard() {
           style={{ padding:"10px", width:"100%", marginBottom:"10px" }}
         />
 
-        {/* Table */}
+        {/* TABLE */}
         <div style={cardStyle}>
           <table width="100%">
             <thead>
@@ -239,7 +241,7 @@ export default function Dashboard() {
                   <td>{i+1}</td>
                   <td>{c.caseNumber}</td>
                   <td>{c.petitioner}</td>
-                  <td>{c.date}</td>
+                  <td>{formatDisplayDate(c.date)}</td>
                   <td>{c.status}</td>
                   <td>
                     <button onClick={()=>editCase(c)}>Edit</button>
@@ -260,16 +262,9 @@ export default function Dashboard() {
 const input = (label,value,onChange)=>(
   <div>
     <label>{label}</label>
-    <input value={value} onChange={(e)=>onChange(e.target.value)} style={inputStyle}/>
+    <input value={value} onChange={(e)=>onChange(e.target.value)} />
   </div>
 );
-
-const inputStyle = {
-  padding:"8px",
-  border:"1px solid #ccc",
-  borderRadius:"5px",
-  width:"100%"
-};
 
 const cardStyle = {
   background:"white",
