@@ -1,4 +1,3 @@
-<h1 style={{color:"red"}}>NEW VERSION</h1>
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -176,6 +175,9 @@ export default function Dashboard() {
 
       {/* MAIN */}
       <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
+
+        {/* ✅ TEST LINE */}
+        <h2 style={{color:"red"}}>THIS IS MY DASHBOARD</h2>
 
         <h2>Dashboard</h2>
 
