@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "./Dashboard.css";
 
-const BASE_URL = "https://case-management-dkgs.onrender.com";
+const BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || "https://case-management-dkgs.onrender.com";
 
 const emptyForm = {
   caseNumber: "",
