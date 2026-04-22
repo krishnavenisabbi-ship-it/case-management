@@ -1,4 +1,5 @@
 .dashboard-shell {
+  /* Layout kept in frontend so Vercel root-directory deploy tests are easy to verify. */
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
