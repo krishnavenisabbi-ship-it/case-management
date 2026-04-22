@@ -5,27 +5,18 @@ import logo from "../assets/logo.png";
 const BASE_URL = "https://case-management-dkgs.onrender.com";
 
 export default function Login() {
-
   const handleSuccess = async (res) => {
     try {
-      // Decode Google credential
       const user = JSON.parse(atob(res.credential.split(".")[1]));
 
-      // Send user data to backend
-      const response = await axios.post(
-        `${BASE_URL}/api/auth/google`,
-        {
-          email: user.email,
-          name: user.name
-        }
-      );
+      const response = await axios.post(`${BASE_URL}/api/auth/google`, {
+        email: user.email,
+        name: user.name,
+      });
 
-      // Save token
       localStorage.setItem("token", response.data.token);
-
-      // Redirect to dashboard
+      localStorage.setItem("user", JSON.stringify(response.data.user));
       window.location.href = "/dashboard";
-
     } catch (err) {
       console.error("Login error:", err);
       alert("Login failed");
@@ -33,53 +24,53 @@ export default function Login() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex"
-    }}>
-
-      {/* LEFT SIDE */}
-      <div style={{
-        flex: 1,
-        background: "#f3f4f6",
+    <div
+      style={{
+        minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}>
-        <img src={logo} alt="logo" style={{ width: "250px" }} />
+        flexWrap: "wrap",
+        background: "#f8fafc",
+      }}
+    >
+      <div
+        style={{
+          flex: "1 1 320px",
+          minHeight: "40vh",
+          background: "linear-gradient(135deg, #e0f2fe, #f8fafc)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "32px",
+        }}
+      >
+        <img src={logo} alt="logo" style={{ width: "min(280px, 70vw)" }} />
       </div>
 
-      {/* RIGHT SIDE */}
-      <div style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center"
-      }}>
+      <div
+        style={{
+          flex: "1 1 320px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "32px 24px",
+        }}
+      >
+        <img src={logo} alt="logo" style={{ width: "100px", marginBottom: "12px" }} />
 
-        {/* TOP LOGO */}
-        <img src={logo} alt="logo" style={{ width: "100px", marginBottom: "10px" }} />
-
-        <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center" }}>
           CASE MANAGEMENT
         </h1>
 
-        <p style={{ color: "gray", marginBottom: "20px" }}>
-          SYSTEM
+        <p style={{ color: "#64748b", marginBottom: "24px" }}>SYSTEM</p>
+
+        <h2 style={{ marginBottom: "8px" }}>Welcome Back</h2>
+
+        <p style={{ marginBottom: "24px", color: "#475569", textAlign: "center" }}>
+          Sign in to manage cases, uploads, and adjournment updates.
         </p>
 
-        <h2>Welcome Back</h2>
-
-        <p style={{ marginBottom: "20px" }}>
-          Sign in to manage your cases
-        </p>
-
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={() => console.log("Login Failed")}
-        />
-
+        <GoogleLogin onSuccess={handleSuccess} onError={() => console.log("Login Failed")} />
       </div>
     </div>
   );

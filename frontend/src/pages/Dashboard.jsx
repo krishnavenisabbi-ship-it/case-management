@@ -1,365 +1,702 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import "./Dashboard.css";
 
 const BASE_URL = "https://case-management-dkgs.onrender.com";
 
-export default function Dashboard() {
-  const [cases, setCases] = useState([]);
-  const [search, setSearch] = useState("");
+const emptyForm = {
+  caseNumber: "",
+  petitioner: "",
+  respondent: "",
+  type: "",
+  advocate: "",
+  phone: "",
+  date: "",
+  adjournmentDate: "",
+  status: "Pending",
+  notes: "",
+  attachments: [],
+};
 
-  const [form, setForm] = useState({
-    caseNumber: "",
-    petitioner: "",
-    respondent: "",
-    type: "",
-    advocate: "",
-    phone: "",
-    date: "",
-    status: "Pending",
+const authConfig = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
+
+const toInputDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
+};
+
+const formatDisplayDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN");
+};
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      resolve({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        content: reader.result,
+      });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 
+const normalizeCaseForForm = (caseItem) => ({
+  caseNumber: caseItem.caseNumber || "",
+  petitioner: caseItem.petitioner || "",
+  respondent: caseItem.respondent || "",
+  type: caseItem.type || "",
+  advocate: caseItem.advocate || "",
+  phone: caseItem.phone || "",
+  date: toInputDate(caseItem.date),
+  adjournmentDate: toInputDate(caseItem.adjournmentDate || caseItem.date),
+  status: caseItem.status || "Pending",
+  notes: caseItem.notes || "",
+  attachments: caseItem.attachments || [],
+});
+
+export default function Dashboard() {
+  const [cases, setCases] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(
+    JSON.parse(localStorage.getItem("user") || "null")
+  );
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("cases");
+  const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       window.location.href = "/";
       return;
     }
 
-    fetchCases();
+    initializeDashboard();
   }, []);
 
+  const initializeDashboard = async () => {
+    try {
+      setLoading(true);
+      const meResponse = await axios.get(`${BASE_URL}/api/auth/me`, authConfig());
+      setCurrentUser(meResponse.data);
+      localStorage.setItem("user", JSON.stringify(meResponse.data));
+
+      await Promise.all([
+        fetchCases(),
+        meResponse.data.role === "admin" ? fetchUsers() : Promise.resolve(),
+      ]);
+    } catch (error) {
+      console.error(error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/";
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchCases = async () => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await axios.get(`${BASE_URL}/api/cases`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCases(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await axios.get(`${BASE_URL}/api/cases`, authConfig());
+    setCases(res.data);
   };
 
-  const formatDisplayDate = (date) => {
-    if (!date) return "No Date";
-    const d = new Date(date);
-    if (Number.isNaN(d.getTime())) return "Invalid Date";
-
-    return `${String(d.getDate()).padStart(2, "0")}-${String(
-      d.getMonth() + 1
-    ).padStart(2, "0")}-${d.getFullYear()}`;
+  const fetchUsers = async () => {
+    const res = await axios.get(`${BASE_URL}/api/admin/users`, authConfig());
+    setUsers(res.data);
   };
 
-  const handleSubmit = async () => {
-    if (!form.caseNumber) {
-      alert("Enter Case Number");
+  const filteredCases = useMemo(() => {
+    const term = search.toLowerCase();
+    return cases.filter((c) =>
+      [
+        c.caseNumber,
+        c.petitioner,
+        c.respondent,
+        c.type,
+        c.advocate,
+        c.phone,
+        c.status,
+        c.notes,
+        c.createdByName,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term))
+    );
+  }, [cases, search]);
+
+  const stats = useMemo(
+    () => [
+      { label: "Total Cases", value: cases.length },
+      {
+        label: "Pending",
+        value: cases.filter((item) => item.status === "Pending").length,
+      },
+      {
+        label: "Disposed",
+        value: cases.filter((item) => item.status === "Disposed").length,
+      },
+      {
+        label: "Uploads",
+        value: cases.reduce(
+          (count, item) => count + (item.attachments?.length || 0),
+          0
+        ),
+      },
+    ],
+    [cases]
+  );
+
+  const updateFormField = (setter, field, value) => {
+    setter((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAttachmentSelect = async (event, setter) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const encodedFiles = await Promise.all(files.map(fileToDataUrl));
+    setter((prev) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), ...encodedFiles].slice(0, 5),
+    }));
+
+    event.target.value = "";
+  };
+
+  const removeAttachment = (setter, index) => {
+    setter((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, currentIndex) => currentIndex !== index),
+    }));
+  };
+
+  const handleCreateCase = async () => {
+    if (!form.caseNumber || !form.adjournmentDate) {
+      alert("Case number and adjournment date are required");
       return;
     }
 
-    if (!form.date) {
-      alert("Please select a date");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-
     try {
-      if (editId) {
-        await axios.put(
-          `${BASE_URL}/api/cases/${editId}`,
-          { ...form, date: form.date },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setEditId(null);
-      } else {
-        await axios.post(
-          `${BASE_URL}/api/cases`,
-          { ...form, date: form.date },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-
-      fetchCases();
-      setForm({
-        caseNumber: "",
-        petitioner: "",
-        respondent: "",
-        type: "",
-        advocate: "",
-        phone: "",
-        date: "",
-        status: "Pending",
-      });
-    } catch {
-      alert("Error saving case");
+      setSaving(true);
+      await axios.post(
+        `${BASE_URL}/api/cases`,
+        {
+          ...form,
+          date: form.date || form.adjournmentDate,
+        },
+        authConfig()
+      );
+      setForm(emptyForm);
+      await fetchCases();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Could not create case");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const editCase = (c) => {
-    if (!c.date) return;
+  const openEditModal = (caseItem) => {
+    setEditId(caseItem._id);
+    setEditForm(normalizeCaseForForm(caseItem));
+    setIsEditOpen(true);
+  };
 
-    const d = new Date(c.date);
-    if (Number.isNaN(d.getTime())) return;
+  const handleUpdateCase = async () => {
+    if (!editId) return;
 
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-
-    setForm({ ...c, date: `${yyyy}-${mm}-${dd}` });
-    setEditId(c._id);
+    try {
+      setSaving(true);
+      await axios.put(
+        `${BASE_URL}/api/cases/${editId}`,
+        {
+          ...editForm,
+          date: editForm.date || editForm.adjournmentDate,
+        },
+        authConfig()
+      );
+      setIsEditOpen(false);
+      setEditId(null);
+      await fetchCases();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Could not update case");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteCase = async (id) => {
     if (!window.confirm("Delete this case?")) return;
 
-    const token = localStorage.getItem("token");
-
     try {
-      await axios.delete(`${BASE_URL}/api/cases/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchCases();
-    } catch {
-      alert("Delete failed");
+      await axios.delete(`${BASE_URL}/api/cases/${id}`, authConfig());
+      await fetchCases();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Delete failed");
+    }
+  };
+
+  const updateUserRole = async (userId, role) => {
+    try {
+      await axios.put(
+        `${BASE_URL}/api/admin/users/${userId}/role`,
+        { role },
+        authConfig()
+      );
+      await fetchUsers();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Role update failed");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.href = "/";
   };
 
-  const filteredCases = cases.filter(
-    (c) =>
-      c.caseNumber?.includes(search) ||
-      c.petitioner?.toLowerCase().includes(search.toLowerCase()) ||
-      c.respondent?.toLowerCase().includes(search.toLowerCase()) ||
-      c.type?.toLowerCase().includes(search.toLowerCase()) ||
-      c.advocate?.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone?.includes(search) ||
-      c.status?.toLowerCase().includes(search.toLowerCase())
-  );
+  if (loading) {
+    return <div className="dashboard-loading">Loading dashboard...</div>;
+  }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <div style={{ width: "220px", background: "#111", color: "white", padding: "20px" }}>
-        <h2>CMS</h2>
-        <button onClick={handleLogout} style={logoutBtn}>
+    <div className="dashboard-shell">
+      <aside className="dashboard-sidebar">
+        <div>
+          <div className="dashboard-brand">CMS</div>
+          <div className="dashboard-user-card">
+            <strong>{currentUser?.name || "User"}</strong>
+            <span>{currentUser?.email}</span>
+            <span className={`role-pill role-${currentUser?.role || "user"}`}>
+              {currentUser?.role || "user"}
+            </span>
+          </div>
+
+          <div className="dashboard-nav">
+            <button
+              className={activeTab === "cases" ? "nav-btn active" : "nav-btn"}
+              onClick={() => setActiveTab("cases")}
+            >
+              Cases
+            </button>
+            {currentUser?.role === "admin" && (
+              <button
+                className={activeTab === "admin" ? "nav-btn active" : "nav-btn"}
+                onClick={() => setActiveTab("admin")}
+              >
+                Admin Panel
+              </button>
+            )}
+          </div>
+        </div>
+
+        <button onClick={handleLogout} className="logout-btn">
           Logout
         </button>
-      </div>
+      </aside>
 
-      <div style={{ flex: 1, padding: "20px", background: "#f5f5f5" }}>
-        <h2>Dashboard</h2>
+      <main className="dashboard-main">
+        <div className="dashboard-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Manage cases, uploads, adjournments, and role-based access.</p>
+          </div>
+        </div>
 
-        <div style={cardStyle}>
-          <h3>{editId ? "Edit Case" : "Add Case"}</h3>
+        <section className="stats-grid">
+          {stats.map((item) => (
+            <article key={item.label} className="stat-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))}
+        </section>
 
-          <div style={gridStyle}>
-            {input("Case Number", form.caseNumber, (v) => setForm({ ...form, caseNumber: v }))}
-            {input("Petitioner", form.petitioner, (v) => setForm({ ...form, petitioner: v }))}
-            {input("Respondent", form.respondent, (v) => setForm({ ...form, respondent: v }))}
-            {input("Type", form.type, (v) => setForm({ ...form, type: v }))}
-            {input("Advocate", form.advocate, (v) => setForm({ ...form, advocate: v }))}
-            {input("Phone", form.phone, (v) => setForm({ ...form, phone: v }))}
+        {activeTab === "cases" && (
+          <>
+            <section className="panel-card">
+              <div className="panel-head">
+                <div>
+                  <h2>Add Case</h2>
+                  <p>Admins can see all cases. Users only see their own.</p>
+                </div>
+              </div>
 
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Date</label>
-              <input
-                type="date"
-                style={inputStyle}
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              <div className="form-grid">
+                <Field
+                  label="Case Number"
+                  value={form.caseNumber}
+                  onChange={(value) => updateFormField(setForm, "caseNumber", value)}
+                />
+                <Field
+                  label="Petitioner"
+                  value={form.petitioner}
+                  onChange={(value) => updateFormField(setForm, "petitioner", value)}
+                />
+                <Field
+                  label="Respondent"
+                  value={form.respondent}
+                  onChange={(value) => updateFormField(setForm, "respondent", value)}
+                />
+                <Field
+                  label="Type"
+                  value={form.type}
+                  onChange={(value) => updateFormField(setForm, "type", value)}
+                />
+                <Field
+                  label="Advocate"
+                  value={form.advocate}
+                  onChange={(value) => updateFormField(setForm, "advocate", value)}
+                />
+                <Field
+                  label="Phone"
+                  value={form.phone}
+                  onChange={(value) => updateFormField(setForm, "phone", value)}
+                />
+                <Field
+                  label="Case Date"
+                  type="date"
+                  value={form.date}
+                  onChange={(value) => updateFormField(setForm, "date", value)}
+                />
+                <Field
+                  label="Adjournment Date"
+                  type="date"
+                  value={form.adjournmentDate}
+                  onChange={(value) =>
+                    updateFormField(setForm, "adjournmentDate", value)
+                  }
+                />
+                <Field
+                  label="Status"
+                  type="select"
+                  value={form.status}
+                  onChange={(value) => updateFormField(setForm, "status", value)}
+                  options={["Pending", "Disposed", "Adjourned"]}
+                />
+                <label className="field field-wide">
+                  <span>Notes</span>
+                  <textarea
+                    className="dashboard-textarea"
+                    value={form.notes}
+                    onChange={(e) => updateFormField(setForm, "notes", e.target.value)}
+                    rows={4}
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>File Upload</span>
+                  <input
+                    className="dashboard-input"
+                    type="file"
+                    multiple
+                    onChange={(event) => handleAttachmentSelect(event, setForm)}
+                  />
+                  <AttachmentList
+                    attachments={form.attachments}
+                    onRemove={(index) => removeAttachment(setForm, index)}
+                    editable
+                  />
+                </label>
+              </div>
+
+              <div className="panel-actions">
+                <button className="primary-btn" onClick={handleCreateCase} disabled={saving}>
+                  {saving ? "Saving..." : "Add Case"}
+                </button>
+              </div>
+            </section>
+
+            <section className="panel-card">
+              <div className="panel-head panel-head-stack">
+                <div>
+                  <h2>Case Records</h2>
+                  <p>Search by case number, party, advocate, phone, or notes.</p>
+                </div>
+                <input
+                  className="dashboard-input"
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="table-wrap">
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Case Number</th>
+                      <th>Petitioner</th>
+                      <th>Respondent</th>
+                      <th>Type</th>
+                      <th>Advocate</th>
+                      <th>Phone</th>
+                      <th>Case Date</th>
+                      <th>Adjournment</th>
+                      <th>Status</th>
+                      <th>Files</th>
+                      <th>Owner</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCases.map((caseItem, index) => (
+                      <tr key={caseItem._id}>
+                        <td>{index + 1}</td>
+                        <td>{caseItem.caseNumber || "-"}</td>
+                        <td>{caseItem.petitioner || "-"}</td>
+                        <td>{caseItem.respondent || "-"}</td>
+                        <td>{caseItem.type || "-"}</td>
+                        <td>{caseItem.advocate || "-"}</td>
+                        <td>{caseItem.phone || "-"}</td>
+                        <td>{formatDisplayDate(caseItem.date)}</td>
+                        <td>{formatDisplayDate(caseItem.adjournmentDate)}</td>
+                        <td>
+                          <span className={`status-pill status-${(caseItem.status || "").toLowerCase()}`}>
+                            {caseItem.status || "-"}
+                          </span>
+                        </td>
+                        <td>
+                          <AttachmentList attachments={caseItem.attachments || []} />
+                        </td>
+                        <td>{caseItem.createdByName || caseItem.createdByEmail || "-"}</td>
+                        <td>
+                          <div className="table-actions">
+                            <button
+                              className="table-btn"
+                              onClick={() => openEditModal(caseItem)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="table-btn danger"
+                              onClick={() => deleteCase(caseItem._id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeTab === "admin" && currentUser?.role === "admin" && (
+          <section className="panel-card">
+            <div className="panel-head">
+              <div>
+                <h2>Admin Panel</h2>
+                <p>Review users and switch roles between admin and user.</p>
+              </div>
+            </div>
+
+            <div className="table-wrap">
+              <table className="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Last Login</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id}>
+                      <td>{user.name || "-"}</td>
+                      <td>{user.email}</td>
+                      <td>
+                        <select
+                          className="dashboard-input role-select"
+                          value={user.role}
+                          onChange={(e) => updateUserRole(user._id, e.target.value)}
+                        >
+                          <option value="admin">admin</option>
+                          <option value="user">user</option>
+                        </select>
+                      </td>
+                      <td>{formatDisplayDate(user.lastLoginAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </main>
+
+      {isEditOpen && (
+        <div className="modal-backdrop" onClick={() => setIsEditOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <h2>Edit Case</h2>
+                <p>Update case details and notify the advocate on adjournment changes.</p>
+              </div>
+              <button className="close-btn" onClick={() => setIsEditOpen(false)}>
+                Close
+              </button>
+            </div>
+
+            <div className="form-grid">
+              <Field
+                label="Case Number"
+                value={editForm.caseNumber}
+                onChange={(value) => updateFormField(setEditForm, "caseNumber", value)}
               />
+              <Field
+                label="Petitioner"
+                value={editForm.petitioner}
+                onChange={(value) => updateFormField(setEditForm, "petitioner", value)}
+              />
+              <Field
+                label="Respondent"
+                value={editForm.respondent}
+                onChange={(value) => updateFormField(setEditForm, "respondent", value)}
+              />
+              <Field
+                label="Type"
+                value={editForm.type}
+                onChange={(value) => updateFormField(setEditForm, "type", value)}
+              />
+              <Field
+                label="Advocate"
+                value={editForm.advocate}
+                onChange={(value) => updateFormField(setEditForm, "advocate", value)}
+              />
+              <Field
+                label="Phone"
+                value={editForm.phone}
+                onChange={(value) => updateFormField(setEditForm, "phone", value)}
+              />
+              <Field
+                label="Case Date"
+                type="date"
+                value={editForm.date}
+                onChange={(value) => updateFormField(setEditForm, "date", value)}
+              />
+              <Field
+                label="Adjournment Date"
+                type="date"
+                value={editForm.adjournmentDate}
+                onChange={(value) =>
+                  updateFormField(setEditForm, "adjournmentDate", value)
+                }
+              />
+              <Field
+                label="Status"
+                type="select"
+                value={editForm.status}
+                onChange={(value) => updateFormField(setEditForm, "status", value)}
+                options={["Pending", "Disposed", "Adjourned"]}
+              />
+              <label className="field field-wide">
+                <span>Notes</span>
+                <textarea
+                  className="dashboard-textarea"
+                  value={editForm.notes}
+                  onChange={(e) => updateFormField(setEditForm, "notes", e.target.value)}
+                  rows={4}
+                />
+              </label>
+              <label className="field field-wide">
+                <span>Attachments</span>
+                <input
+                  className="dashboard-input"
+                  type="file"
+                  multiple
+                  onChange={(event) => handleAttachmentSelect(event, setEditForm)}
+                />
+                <AttachmentList
+                  attachments={editForm.attachments}
+                  editable
+                  onRemove={(index) => removeAttachment(setEditForm, index)}
+                />
+              </label>
             </div>
 
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Status</label>
-              <select
-                style={inputStyle}
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-              >
-                <option>Pending</option>
-                <option>Disposed</option>
-              </select>
+            <div className="panel-actions">
+              <button className="secondary-btn" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </button>
+              <button className="primary-btn" onClick={handleUpdateCase} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
-
-          <div style={actionsRowStyle}>
-            <button onClick={handleSubmit} style={submitBtn(editId)}>
-              {editId ? "Update" : "Add Case"}
-            </button>
-          </div>
         </div>
-
-        <input
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ ...inputStyle, marginBottom: "10px" }}
-        />
-
-        <div style={cardStyle}>
-          <div style={tableWrapperStyle}>
-            <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>#</th>
-                <th style={thStyle}>Case Number</th>
-                <th style={thStyle}>Petitioner</th>
-                <th style={thStyle}>Respondent</th>
-                <th style={thStyle}>Type</th>
-                <th style={thStyle}>Advocate</th>
-                <th style={thStyle}>Phone</th>
-                <th style={thStyle}>Date</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredCases.map((c, i) => (
-                <tr key={c._id}>
-                  <td style={tdStyle}>{i + 1}</td>
-                  <td style={tdStyle}>{c.caseNumber || "-"}</td>
-                  <td style={tdStyle}>{c.petitioner || "-"}</td>
-                  <td style={tdStyle}>{c.respondent || "-"}</td>
-                  <td style={tdStyle}>{c.type || "-"}</td>
-                  <td style={tdStyle}>{c.advocate || "-"}</td>
-                  <td style={tdStyle}>{c.phone || "-"}</td>
-                  <td style={tdStyle}>{formatDisplayDate(c.date)}</td>
-                  <td style={tdStyle}>{c.status || "-"}</td>
-                  <td style={tdStyle}>
-                    <div style={actionCellStyle}>
-                      <button onClick={() => editCase(c)} style={tableActionBtn}>
-                        Edit
-                      </button>
-                      <button onClick={() => deleteCase(c._id)} style={tableActionBtn}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-const input = (label, value, onChange) => (
-  <div style={fieldStyle}>
-    <label style={labelStyle}>{label}</label>
-    <input style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)} />
-  </div>
-);
+function Field({ label, value, onChange, type = "text", options = [] }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      {type === "select" ? (
+        <select className="dashboard-input" value={value} onChange={(e) => onChange(e.target.value)}>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          className="dashboard-input"
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </label>
+  );
+}
 
-const cardStyle = {
-  background: "white",
-  padding: "20px",
-  marginBottom: "20px",
-  borderRadius: "10px",
-};
+function AttachmentList({ attachments = [], editable = false, onRemove }) {
+  if (!attachments.length) {
+    return <span className="attachment-empty">No files</span>;
+  }
 
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
-  gap: "16px",
-  alignItems: "start",
-};
-
-const fieldStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  minWidth: 0,
-};
-
-const labelStyle = {
-  fontSize: "16px",
-  lineHeight: 1.25,
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "44px",
-  padding: "10px 12px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-  background: "white",
-  boxSizing: "border-box",
-  fontSize: "16px",
-};
-
-const actionsRowStyle = {
-  marginTop: "20px",
-};
-
-const tableWrapperStyle = {
-  overflowX: "auto",
-};
-
-const tableStyle = {
-  width: "100%",
-  minWidth: "1100px",
-  borderCollapse: "collapse",
-  border: "1px solid #dbe3ea",
-  background: "#ffffff",
-};
-
-const thStyle = {
-  textAlign: "left",
-  padding: "12px 16px",
-  whiteSpace: "nowrap",
-  border: "1px solid #dbe3ea",
-  background: "#f8fafc",
-  fontWeight: 700,
-};
-
-const tdStyle = {
-  textAlign: "left",
-  padding: "12px 16px",
-  verticalAlign: "top",
-  whiteSpace: "nowrap",
-  border: "1px solid #e5e7eb",
-};
-
-const actionCellStyle = {
-  display: "flex",
-  gap: "8px",
-  alignItems: "center",
-};
-
-const tableActionBtn = {
-  padding: "6px 10px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  background: "#fff",
-  cursor: "pointer",
-};
-
-const logoutBtn = {
-  marginTop: "20px",
-  padding: "10px",
-  width: "100%",
-  background: "red",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-};
-
-const submitBtn = (editId) => ({
-  padding: "10px",
-  background: editId ? "green" : "blue",
-  color: "white",
-  border: "none",
-  borderRadius: "6px",
-});
+  return (
+    <div className="attachment-list">
+      {attachments.map((file, index) => (
+        <div key={`${file.name}-${index}`} className="attachment-chip">
+          <a href={file.content} download={file.name} target="_blank" rel="noreferrer">
+            {file.name}
+          </a>
+          {editable && (
+            <button type="button" onClick={() => onRemove(index)}>
+              x
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

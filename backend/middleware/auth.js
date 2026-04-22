@@ -15,3 +15,11 @@ export const verifyToken = (req, res, next) => {
     res.status(403).json({ message: "Invalid token" });
   }
 };
+
+export const requireAdmin = (req, res, next) => {
+  if (req.currentUser?.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+
+  next();
+};
