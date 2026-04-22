@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "user"],
       default: "user",
     },
+    loginEnabled: {
+      type: Boolean,
+      default: false,
+    },
     lastLoginAt: Date,
   },
   { timestamps: true }

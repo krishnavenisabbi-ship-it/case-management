@@ -270,6 +270,20 @@ export default function Dashboard() {
     }
   };
 
+  const updateUserLoginAccess = async (userId, loginEnabled) => {
+    try {
+      await axios.put(
+        `${BASE_URL}/api/admin/users/${userId}/login-access`,
+        { loginEnabled },
+        authConfig()
+      );
+      await fetchUsers();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Login access update failed");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -522,6 +536,7 @@ export default function Dashboard() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Login Access</th>
                     <th>Last Login</th>
                   </tr>
                 </thead>
@@ -538,6 +553,21 @@ export default function Dashboard() {
                         >
                           <option value="admin">admin</option>
                           <option value="user">user</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          className="dashboard-input role-select"
+                          value={user.loginEnabled ? "enabled" : "disabled"}
+                          onChange={(e) =>
+                            updateUserLoginAccess(
+                              user._id,
+                              e.target.value === "enabled"
+                            )
+                          }
+                        >
+                          <option value="enabled">enabled</option>
+                          <option value="disabled">disabled</option>
                         </select>
                       </td>
                       <td>{formatDisplayDate(user.lastLoginAt)}</td>

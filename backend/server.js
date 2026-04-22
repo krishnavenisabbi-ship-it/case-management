@@ -56,6 +56,8 @@ const getAdminEmails = () =>
     )
   );
 
+const isPrivilegedEmail = (email = "") => getAdminEmails().includes(email.toLowerCase());
+
 const normalizeAttachments = (attachments = [], actorEmail = "") =>
   attachments
     .filter((file) => file?.name && file?.content)
@@ -167,7 +169,8 @@ app.post("/api/auth/google", async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase();
-    const defaultRole = getAdminEmails().includes(normalizedEmail) ? "admin" : "user";
+    const isAdminEmail = isPrivilegedEmail(normalizedEmail);
+    const defaultRole = isAdminEmail ? "admin" : "user";
 
     let user = await User.findOne({ email: normalizedEmail });
 
@@ -176,15 +179,28 @@ app.post("/api/auth/google", async (req, res) => {
         email: normalizedEmail,
         name: name || normalizedEmail,
         role: defaultRole,
+        loginEnabled: isAdminEmail,
         lastLoginAt: new Date(),
       });
     } else {
       user.name = name || user.name || normalizedEmail;
-      if (getAdminEmails().includes(normalizedEmail)) {
+      if (isAdminEmail) {
         user.role = "admin";
+        user.loginEnabled = true;
+      }
+      if (!user.loginEnabled && !isAdminEmail) {
+        return res.status(403).json({
+          message: "Your login access is disabled. Please contact admin.",
+        });
       }
       user.lastLoginAt = new Date();
       await user.save();
+    }
+
+    if (!user.loginEnabled && !isAdminEmail) {
+      return res.status(403).json({
+        message: "Your login access is disabled. Please contact admin.",
+      });
     }
 
     const token = jwt.sign(
@@ -200,6 +216,7 @@ app.post("/api/auth/google", async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        loginEnabled: user.loginEnabled,
       },
     });
   } catch (err) {
@@ -214,6 +231,7 @@ app.get("/api/auth/me", verifyToken, withUser, async (req, res) => {
     email: req.currentUser.email,
     name: req.currentUser.name,
     role: req.currentUser.role,
+    loginEnabled: req.currentUser.loginEnabled,
   });
 });
 
@@ -367,6 +385,37 @@ app.put(
       );
 
       res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+);
+
+app.put(
+  "/api/admin/users/:id/login-access",
+  verifyToken,
+  withUser,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { loginEnabled } = req.body;
+      const existingUser = await User.findById(req.params.id);
+
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (
+        existingUser.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL &&
+        loginEnabled !== true
+      ) {
+        return res.status(400).json({ message: "Primary admin access is locked" });
+      }
+
+      existingUser.loginEnabled = Boolean(loginEnabled);
+      await existingUser.save();
+
+      res.json(existingUser);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
