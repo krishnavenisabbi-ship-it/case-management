@@ -14,6 +14,8 @@ const app = express();
 
 const allowedOrigins = [
   "https://yourcase.in",
+  "https://www.yourcase.in",
+  "https://case-management-alpha.vercel.app",
   "https://case-management-dkgs.onrender.com",
   "http://localhost:5173",
 ];
