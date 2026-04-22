@@ -11,6 +11,7 @@ import User from "./models/User.js";
 import { requireAdmin, verifyToken } from "./middleware/auth.js";
 
 const app = express();
+const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
 const allowedOrigins = [
   "https://yourcase.in",
@@ -47,10 +48,13 @@ app.get("/", (req, res) => {
 });
 
 const getAdminEmails = () =>
-  (process.env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+  Array.from(
+    new Set(
+      [PRIMARY_ADMIN_EMAIL, ...(process.env.ADMIN_EMAILS || "").split(",")]
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
 
 const normalizeAttachments = (attachments = [], actorEmail = "") =>
   attachments
@@ -176,6 +180,9 @@ app.post("/api/auth/google", async (req, res) => {
       });
     } else {
       user.name = name || user.name || normalizedEmail;
+      if (getAdminEmails().includes(normalizedEmail)) {
+        user.role = "admin";
+      }
       user.lastLoginAt = new Date();
       await user.save();
     }
@@ -340,15 +347,24 @@ app.put(
         return res.status(400).json({ message: "Invalid role" });
       }
 
+      const existingUser = await User.findById(req.params.id);
+
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (
+        existingUser.email?.toLowerCase() === PRIMARY_ADMIN_EMAIL &&
+        role !== "admin"
+      ) {
+        return res.status(400).json({ message: "Primary admin role is locked" });
+      }
+
       const user = await User.findByIdAndUpdate(
         req.params.id,
         { role },
         { new: true }
       );
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
 
       res.json(user);
     } catch (error) {
