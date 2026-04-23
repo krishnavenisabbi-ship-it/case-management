@@ -71,13 +71,20 @@ const normalizeAttachments = (attachments = [], actorEmail = "") =>
     }));
 
 const buildCasePayload = (body, actor) => ({
+  state: body.state || "",
+  district: body.district || "",
+  courtName: body.courtName || "",
+  caseType: body.caseType || body.type || "",
   caseNumber: body.caseNumber || "",
   petitioner: body.petitioner || "",
   respondent: body.respondent || "",
-  type: body.type || "",
-  advocate: body.advocate || "",
+  filingDate: body.filingDate || body.date || "",
+  stepOfAdjournment: body.stepOfAdjournment || "",
+  otherSideAdvocateName: body.otherSideAdvocateName || body.advocate || "",
+  type: body.caseType || body.type || "",
+  advocate: body.otherSideAdvocateName || body.advocate || "",
   phone: body.phone || "",
-  date: body.date || "",
+  date: body.filingDate || body.date || "",
   adjournmentDate: body.adjournmentDate || body.date || "",
   status: body.status || "Pending",
   notes: body.notes || "",
@@ -290,12 +297,20 @@ app.put("/api/cases/:id", verifyToken, withUser, async (req, res) => {
         : existingCase.attachments;
 
     existingCase.caseNumber = req.body.caseNumber || "";
+    existingCase.state = req.body.state || "";
+    existingCase.district = req.body.district || "";
+    existingCase.courtName = req.body.courtName || "";
+    existingCase.caseType = req.body.caseType || req.body.type || "";
     existingCase.petitioner = req.body.petitioner || "";
     existingCase.respondent = req.body.respondent || "";
-    existingCase.type = req.body.type || "";
-    existingCase.advocate = req.body.advocate || "";
+    existingCase.filingDate = req.body.filingDate || req.body.date || "";
+    existingCase.stepOfAdjournment = req.body.stepOfAdjournment || "";
+    existingCase.otherSideAdvocateName =
+      req.body.otherSideAdvocateName || req.body.advocate || "";
+    existingCase.type = req.body.caseType || req.body.type || "";
+    existingCase.advocate = req.body.otherSideAdvocateName || req.body.advocate || "";
     existingCase.phone = req.body.phone || "";
-    existingCase.date = req.body.date || "";
+    existingCase.date = req.body.filingDate || req.body.date || "";
     existingCase.adjournmentDate = req.body.adjournmentDate || req.body.date || "";
     existingCase.status = req.body.status || "Pending";
     existingCase.notes = req.body.notes || "";

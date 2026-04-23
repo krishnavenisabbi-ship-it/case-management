@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { INDIA_STATE_DISTRICTS, INDIA_STATES } from "../data/indiaLocations";
 import "./Dashboard.css";
 
 const BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "https://case-management-dkgs.onrender.com";
 
 const emptyForm = {
+  state: "",
+  district: "",
+  courtName: "",
+  caseType: "",
   caseNumber: "",
   petitioner: "",
   respondent: "",
-  type: "",
-  advocate: "",
-  phone: "",
-  date: "",
+  filingDate: "",
   adjournmentDate: "",
+  stepOfAdjournment: "",
+  otherSideAdvocateName: "",
+  phone: "",
   status: "Pending",
   notes: "",
   attachments: [],
@@ -36,7 +41,9 @@ const formatDisplayDate = (value) => {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("en-IN");
+  return `${String(date.getDate()).padStart(2, "0")}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}-${date.getFullYear()}`;
 };
 
 const fileToDataUrl = (file) =>
@@ -54,14 +61,19 @@ const fileToDataUrl = (file) =>
   });
 
 const normalizeCaseForForm = (caseItem) => ({
+  state: caseItem.state || "",
+  district: caseItem.district || "",
+  courtName: caseItem.courtName || "",
+  caseType: caseItem.caseType || caseItem.type || "",
   caseNumber: caseItem.caseNumber || "",
   petitioner: caseItem.petitioner || "",
   respondent: caseItem.respondent || "",
-  type: caseItem.type || "",
-  advocate: caseItem.advocate || "",
+  filingDate: toInputDate(caseItem.filingDate || caseItem.date),
+  adjournmentDate: toInputDate(caseItem.adjournmentDate),
+  stepOfAdjournment: caseItem.stepOfAdjournment || "",
+  otherSideAdvocateName:
+    caseItem.otherSideAdvocateName || caseItem.advocate || "",
   phone: caseItem.phone || "",
-  date: toInputDate(caseItem.date),
-  adjournmentDate: toInputDate(caseItem.adjournmentDate || caseItem.date),
   status: caseItem.status || "Pending",
   notes: caseItem.notes || "",
   attachments: caseItem.attachments || [],
@@ -125,17 +137,20 @@ export default function Dashboard() {
 
   const filteredCases = useMemo(() => {
     const term = search.toLowerCase();
-    return cases.filter((c) =>
+    return cases.filter((caseItem) =>
       [
-        c.caseNumber,
-        c.petitioner,
-        c.respondent,
-        c.type,
-        c.advocate,
-        c.phone,
-        c.status,
-        c.notes,
-        c.createdByName,
+        caseItem.state,
+        caseItem.district,
+        caseItem.courtName,
+        caseItem.caseType || caseItem.type,
+        caseItem.caseNumber,
+        caseItem.petitioner,
+        caseItem.respondent,
+        caseItem.stepOfAdjournment,
+        caseItem.otherSideAdvocateName || caseItem.advocate,
+        caseItem.phone,
+        caseItem.status,
+        caseItem.notes,
       ]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(term))
@@ -165,7 +180,13 @@ export default function Dashboard() {
   );
 
   const updateFormField = (setter, field, value) => {
-    setter((prev) => ({ ...prev, [field]: value }));
+    setter((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "state") {
+        next.district = "";
+      }
+      return next;
+    });
   };
 
   const handleAttachmentSelect = async (event, setter) => {
@@ -189,21 +210,14 @@ export default function Dashboard() {
   };
 
   const handleCreateCase = async () => {
-    if (!form.caseNumber || !form.adjournmentDate) {
-      alert("Case number and adjournment date are required");
+    if (!form.caseNumber || !form.state || !form.district || !form.adjournmentDate) {
+      alert("State, district, case number, and adjournment date are required");
       return;
     }
 
     try {
       setSaving(true);
-      await axios.post(
-        `${BASE_URL}/api/cases`,
-        {
-          ...form,
-          date: form.date || form.adjournmentDate,
-        },
-        authConfig()
-      );
+      await axios.post(`${BASE_URL}/api/cases`, form, authConfig());
       setForm(emptyForm);
       await fetchCases();
     } catch (error) {
@@ -225,14 +239,7 @@ export default function Dashboard() {
 
     try {
       setSaving(true);
-      await axios.put(
-        `${BASE_URL}/api/cases/${editId}`,
-        {
-          ...editForm,
-          date: editForm.date || editForm.adjournmentDate,
-        },
-        authConfig()
-      );
+      await axios.put(`${BASE_URL}/api/cases/${editId}`, editForm, authConfig());
       setIsEditOpen(false);
       setEditId(null);
       await fetchCases();
@@ -334,7 +341,7 @@ export default function Dashboard() {
         <div className="dashboard-header">
           <div>
             <h1>Dashboard</h1>
-            <p>Manage cases, uploads, adjournments, and role-based access.</p>
+            <p>Case columns are arranged in your requested order.</p>
           </div>
         </div>
 
@@ -353,86 +360,16 @@ export default function Dashboard() {
               <div className="panel-head">
                 <div>
                   <h2>Add Case</h2>
-                  <p>Admins can see all cases. Users only see their own.</p>
+                  <p>Fill the case details in the same order used by the table.</p>
                 </div>
               </div>
 
-              <div className="form-grid">
-                <Field
-                  label="Case Number"
-                  value={form.caseNumber}
-                  onChange={(value) => updateFormField(setForm, "caseNumber", value)}
-                />
-                <Field
-                  label="Petitioner"
-                  value={form.petitioner}
-                  onChange={(value) => updateFormField(setForm, "petitioner", value)}
-                />
-                <Field
-                  label="Respondent"
-                  value={form.respondent}
-                  onChange={(value) => updateFormField(setForm, "respondent", value)}
-                />
-                <Field
-                  label="Type"
-                  value={form.type}
-                  onChange={(value) => updateFormField(setForm, "type", value)}
-                />
-                <Field
-                  label="Advocate"
-                  value={form.advocate}
-                  onChange={(value) => updateFormField(setForm, "advocate", value)}
-                />
-                <Field
-                  label="Phone"
-                  value={form.phone}
-                  onChange={(value) => updateFormField(setForm, "phone", value)}
-                />
-                <Field
-                  label="Case Date"
-                  type="date"
-                  value={form.date}
-                  onChange={(value) => updateFormField(setForm, "date", value)}
-                />
-                <Field
-                  label="Adjournment Date"
-                  type="date"
-                  value={form.adjournmentDate}
-                  onChange={(value) =>
-                    updateFormField(setForm, "adjournmentDate", value)
-                  }
-                />
-                <Field
-                  label="Status"
-                  type="select"
-                  value={form.status}
-                  onChange={(value) => updateFormField(setForm, "status", value)}
-                  options={["Pending", "Disposed", "Adjourned"]}
-                />
-                <label className="field field-wide">
-                  <span>Notes</span>
-                  <textarea
-                    className="dashboard-textarea"
-                    value={form.notes}
-                    onChange={(e) => updateFormField(setForm, "notes", e.target.value)}
-                    rows={4}
-                  />
-                </label>
-                <label className="field field-wide">
-                  <span>File Upload</span>
-                  <input
-                    className="dashboard-input"
-                    type="file"
-                    multiple
-                    onChange={(event) => handleAttachmentSelect(event, setForm)}
-                  />
-                  <AttachmentList
-                    attachments={form.attachments}
-                    onRemove={(index) => removeAttachment(setForm, index)}
-                    editable
-                  />
-                </label>
-              </div>
+              <CaseForm
+                form={form}
+                setForm={setForm}
+                onAttachmentSelect={handleAttachmentSelect}
+                onAttachmentRemove={removeAttachment}
+              />
 
               <div className="panel-actions">
                 <button className="primary-btn" onClick={handleCreateCase} disabled={saving}>
@@ -445,7 +382,7 @@ export default function Dashboard() {
               <div className="panel-head panel-head-stack">
                 <div>
                   <h2>Case Records</h2>
-                  <p>Search by case number, party, advocate, phone, or notes.</p>
+                  <p>Search by state, district, court, case number, party, or phone.</p>
                 </div>
                 <input
                   className="dashboard-input"
@@ -459,48 +396,51 @@ export default function Dashboard() {
                 <table className="dashboard-table">
                   <thead>
                     <tr>
-                      <th>#</th>
+                      <th>State</th>
+                      <th>District</th>
+                      <th>Court Name</th>
+                      <th>Case Type</th>
                       <th>Case Number</th>
-                      <th>Petitioner</th>
-                      <th>Respondent</th>
-                      <th>Type</th>
-                      <th>Advocate</th>
-                      <th>Phone</th>
-                      <th>Case Date</th>
-                      <th>Adjournment</th>
+                      <th>Petitioner Name</th>
+                      <th>Respondent Name</th>
+                      <th>Case Filing Date</th>
+                      <th>Adjournment Date</th>
+                      <th>Step of Adjournment</th>
+                      <th>Other Side Advocate Name</th>
+                      <th>Phone Number</th>
                       <th>Status</th>
-                      <th>Files</th>
-                      <th>Owner</th>
+                      <th>Notes</th>
+                      <th>Attachments</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCases.map((caseItem, index) => (
+                    {filteredCases.map((caseItem) => (
                       <tr key={caseItem._id}>
-                        <td>{index + 1}</td>
+                        <td>{caseItem.state || "-"}</td>
+                        <td>{caseItem.district || "-"}</td>
+                        <td>{caseItem.courtName || "-"}</td>
+                        <td>{caseItem.caseType || caseItem.type || "-"}</td>
                         <td>{caseItem.caseNumber || "-"}</td>
                         <td>{caseItem.petitioner || "-"}</td>
                         <td>{caseItem.respondent || "-"}</td>
-                        <td>{caseItem.type || "-"}</td>
-                        <td>{caseItem.advocate || "-"}</td>
-                        <td>{caseItem.phone || "-"}</td>
-                        <td>{formatDisplayDate(caseItem.date)}</td>
+                        <td>{formatDisplayDate(caseItem.filingDate || caseItem.date)}</td>
                         <td>{formatDisplayDate(caseItem.adjournmentDate)}</td>
+                        <td>{caseItem.stepOfAdjournment || "-"}</td>
+                        <td>{caseItem.otherSideAdvocateName || caseItem.advocate || "-"}</td>
+                        <td>{caseItem.phone || "-"}</td>
                         <td>
                           <span className={`status-pill status-${(caseItem.status || "").toLowerCase()}`}>
                             {caseItem.status || "-"}
                           </span>
                         </td>
+                        <td>{caseItem.notes || "-"}</td>
                         <td>
                           <AttachmentList attachments={caseItem.attachments || []} />
                         </td>
-                        <td>{caseItem.createdByName || caseItem.createdByEmail || "-"}</td>
                         <td>
                           <div className="table-actions">
-                            <button
-                              className="table-btn"
-                              onClick={() => openEditModal(caseItem)}
-                            >
+                            <button className="table-btn" onClick={() => openEditModal(caseItem)}>
                               Edit
                             </button>
                             <button
@@ -525,7 +465,7 @@ export default function Dashboard() {
             <div className="panel-head">
               <div>
                 <h2>Admin Panel</h2>
-                <p>Review users and switch roles between admin and user.</p>
+                <p>Control role and login access for users.</p>
               </div>
             </div>
 
@@ -560,10 +500,7 @@ export default function Dashboard() {
                           className="dashboard-input role-select"
                           value={user.loginEnabled ? "enabled" : "disabled"}
                           onChange={(e) =>
-                            updateUserLoginAccess(
-                              user._id,
-                              e.target.value === "enabled"
-                            )
+                            updateUserLoginAccess(user._id, e.target.value === "enabled")
                           }
                         >
                           <option value="enabled">enabled</option>
@@ -586,89 +523,19 @@ export default function Dashboard() {
             <div className="modal-head">
               <div>
                 <h2>Edit Case</h2>
-                <p>Update case details and notify the advocate on adjournment changes.</p>
+                <p>Update case details in the same order as the dashboard table.</p>
               </div>
               <button className="close-btn" onClick={() => setIsEditOpen(false)}>
                 Close
               </button>
             </div>
 
-            <div className="form-grid">
-              <Field
-                label="Case Number"
-                value={editForm.caseNumber}
-                onChange={(value) => updateFormField(setEditForm, "caseNumber", value)}
-              />
-              <Field
-                label="Petitioner"
-                value={editForm.petitioner}
-                onChange={(value) => updateFormField(setEditForm, "petitioner", value)}
-              />
-              <Field
-                label="Respondent"
-                value={editForm.respondent}
-                onChange={(value) => updateFormField(setEditForm, "respondent", value)}
-              />
-              <Field
-                label="Type"
-                value={editForm.type}
-                onChange={(value) => updateFormField(setEditForm, "type", value)}
-              />
-              <Field
-                label="Advocate"
-                value={editForm.advocate}
-                onChange={(value) => updateFormField(setEditForm, "advocate", value)}
-              />
-              <Field
-                label="Phone"
-                value={editForm.phone}
-                onChange={(value) => updateFormField(setEditForm, "phone", value)}
-              />
-              <Field
-                label="Case Date"
-                type="date"
-                value={editForm.date}
-                onChange={(value) => updateFormField(setEditForm, "date", value)}
-              />
-              <Field
-                label="Adjournment Date"
-                type="date"
-                value={editForm.adjournmentDate}
-                onChange={(value) =>
-                  updateFormField(setEditForm, "adjournmentDate", value)
-                }
-              />
-              <Field
-                label="Status"
-                type="select"
-                value={editForm.status}
-                onChange={(value) => updateFormField(setEditForm, "status", value)}
-                options={["Pending", "Disposed", "Adjourned"]}
-              />
-              <label className="field field-wide">
-                <span>Notes</span>
-                <textarea
-                  className="dashboard-textarea"
-                  value={editForm.notes}
-                  onChange={(e) => updateFormField(setEditForm, "notes", e.target.value)}
-                  rows={4}
-                />
-              </label>
-              <label className="field field-wide">
-                <span>Attachments</span>
-                <input
-                  className="dashboard-input"
-                  type="file"
-                  multiple
-                  onChange={(event) => handleAttachmentSelect(event, setEditForm)}
-                />
-                <AttachmentList
-                  attachments={editForm.attachments}
-                  editable
-                  onRemove={(index) => removeAttachment(setEditForm, index)}
-                />
-              </label>
-            </div>
+            <CaseForm
+              form={editForm}
+              setForm={setEditForm}
+              onAttachmentSelect={handleAttachmentSelect}
+              onAttachmentRemove={removeAttachment}
+            />
 
             <div className="panel-actions">
               <button className="secondary-btn" onClick={() => setIsEditOpen(false)}>
@@ -685,12 +552,140 @@ export default function Dashboard() {
   );
 }
 
-function Field({ label, value, onChange, type = "text", options = [] }) {
+function CaseForm({ form, setForm, onAttachmentSelect, onAttachmentRemove }) {
+  const districtOptions = INDIA_STATE_DISTRICTS[form.state] || [];
+
+  return (
+    <div className="form-grid">
+      <Field
+        label="State"
+        type="select"
+        value={form.state}
+        onChange={(value) =>
+          setForm((prev) => ({ ...prev, state: value, district: "" }))
+        }
+        options={INDIA_STATES}
+        placeholder="Select State"
+      />
+      <Field
+        label="District"
+        type="select"
+        value={form.district}
+        onChange={(value) => setForm((prev) => ({ ...prev, district: value }))}
+        options={districtOptions}
+        placeholder={form.state ? "Select District" : "Select State First"}
+        disabled={!form.state}
+      />
+      <Field
+        label="Court Name"
+        value={form.courtName}
+        onChange={(value) => setForm((prev) => ({ ...prev, courtName: value }))}
+      />
+      <Field
+        label="Case Type"
+        value={form.caseType}
+        onChange={(value) => setForm((prev) => ({ ...prev, caseType: value }))}
+      />
+      <Field
+        label="Case Number"
+        value={form.caseNumber}
+        onChange={(value) => setForm((prev) => ({ ...prev, caseNumber: value }))}
+      />
+      <Field
+        label="Petitioner Name"
+        value={form.petitioner}
+        onChange={(value) => setForm((prev) => ({ ...prev, petitioner: value }))}
+      />
+      <Field
+        label="Respondent Name"
+        value={form.respondent}
+        onChange={(value) => setForm((prev) => ({ ...prev, respondent: value }))}
+      />
+      <Field
+        label="Case Filing Date"
+        type="date"
+        value={form.filingDate}
+        onChange={(value) => setForm((prev) => ({ ...prev, filingDate: value }))}
+      />
+      <Field
+        label="Adjournment Date"
+        type="date"
+        value={form.adjournmentDate}
+        onChange={(value) => setForm((prev) => ({ ...prev, adjournmentDate: value }))}
+      />
+      <Field
+        label="Step of Adjournment"
+        value={form.stepOfAdjournment}
+        onChange={(value) =>
+          setForm((prev) => ({ ...prev, stepOfAdjournment: value }))
+        }
+      />
+      <Field
+        label="Other Side Advocate Name"
+        value={form.otherSideAdvocateName}
+        onChange={(value) =>
+          setForm((prev) => ({ ...prev, otherSideAdvocateName: value }))
+        }
+      />
+      <Field
+        label="Phone Number"
+        value={form.phone}
+        onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+      />
+      <Field
+        label="Status"
+        type="select"
+        value={form.status}
+        onChange={(value) => setForm((prev) => ({ ...prev, status: value }))}
+        options={["Pending", "Disposed"]}
+      />
+      <label className="field field-wide">
+        <span>Notes</span>
+        <textarea
+          className="dashboard-textarea"
+          value={form.notes}
+          onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+          rows={4}
+        />
+      </label>
+      <label className="field field-wide">
+        <span>Attachments</span>
+        <input
+          className="dashboard-input"
+          type="file"
+          multiple
+          onChange={(event) => onAttachmentSelect(event, setForm)}
+        />
+        <AttachmentList
+          attachments={form.attachments}
+          onRemove={(index) => onAttachmentRemove(setForm, index)}
+          editable
+        />
+      </label>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  options = [],
+  placeholder = "Select",
+  disabled = false,
+}) {
   return (
     <label className="field">
       <span>{label}</span>
       {type === "select" ? (
-        <select className="dashboard-input" value={value} onChange={(e) => onChange(e.target.value)}>
+        <select
+          className="dashboard-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+        >
+          <option value="">{placeholder}</option>
           {options.map((option) => (
             <option key={option} value={option}>
               {option}

@@ -14,9 +14,16 @@ const attachmentSchema = new mongoose.Schema(
 
 const caseSchema = new mongoose.Schema(
   {
+    state: String,
+    district: String,
+    courtName: String,
+    caseType: String,
     caseNumber: String,
     petitioner: String,
     respondent: String,
+    filingDate: String,
+    stepOfAdjournment: String,
+    otherSideAdvocateName: String,
     type: String,
     advocate: String,
     phone: String,
