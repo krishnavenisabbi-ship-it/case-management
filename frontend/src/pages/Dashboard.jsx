@@ -109,10 +109,11 @@ export default function Dashboard() {
       setLoading(true);
       const meResponse = await axios.get(`${BASE_URL}/api/auth/me`, authConfig());
       setCurrentUser(meResponse.data);
+      setActiveTab(meResponse.data.role === "admin" ? "admin" : "cases");
       localStorage.setItem("user", JSON.stringify(meResponse.data));
 
       await Promise.all([
-        fetchCases(),
+        meResponse.data.role === "admin" ? Promise.resolve() : fetchCases(),
         meResponse.data.role === "admin" ? fetchUsers() : Promise.resolve(),
       ]);
     } catch (error) {
@@ -354,7 +355,21 @@ export default function Dashboard() {
           ))}
         </section>
 
-        {activeTab === "cases" && (
+        {currentUser?.role === "admin" && (
+          <section className="panel-card">
+            <div className="panel-head">
+              <div>
+                <h2>Admin Access Control</h2>
+                <p>
+                  This admin account can only allow or block user logins. Case data is
+                  hidden from admin view.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {currentUser?.role !== "admin" && activeTab === "cases" && (
           <>
             <section className="panel-card">
               <div className="panel-head">

@@ -146,7 +146,15 @@ const sendAdjournmentSms = async ({ phone, caseNumber, adjournmentDate }) => {
 };
 
 const canManageCase = (currentUser, caseItem) =>
-  currentUser?.role === "admin" || caseItem.createdByEmail === currentUser?.email;
+  currentUser?.role !== "admin" && caseItem.createdByEmail === currentUser?.email;
+
+const requireCaseUser = (req, res, next) => {
+  if (req.currentUser?.role === "admin") {
+    return res.status(403).json({ message: "Admins cannot access case data" });
+  }
+
+  next();
+};
 
 const withUser = async (req, res, next) => {
   try {
@@ -244,19 +252,20 @@ app.get("/api/auth/me", verifyToken, withUser, async (req, res) => {
 
 app.get("/api/cases", verifyToken, withUser, async (req, res) => {
   try {
-    const query =
-      req.currentUser.role === "admin"
-        ? {}
-        : { createdByEmail: req.currentUser.email };
+    if (req.currentUser.role === "admin") {
+      return res.json([]);
+    }
 
-    const cases = await Case.find(query).sort({ createdAt: -1 });
+    const cases = await Case.find({ createdByEmail: req.currentUser.email }).sort({
+      createdAt: -1,
+    });
     res.json(cases);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-app.post("/api/cases", verifyToken, withUser, async (req, res) => {
+app.post("/api/cases", verifyToken, withUser, requireCaseUser, async (req, res) => {
   try {
     const newCase = new Case(buildCasePayload(req.body, req.currentUser));
     const savedCase = await newCase.save();
@@ -279,7 +288,7 @@ app.post("/api/cases", verifyToken, withUser, async (req, res) => {
   }
 });
 
-app.put("/api/cases/:id", verifyToken, withUser, async (req, res) => {
+app.put("/api/cases/:id", verifyToken, withUser, requireCaseUser, async (req, res) => {
   try {
     const existingCase = await Case.findById(req.params.id);
 
@@ -339,7 +348,7 @@ app.put("/api/cases/:id", verifyToken, withUser, async (req, res) => {
   }
 });
 
-app.delete("/api/cases/:id", verifyToken, withUser, async (req, res) => {
+app.delete("/api/cases/:id", verifyToken, withUser, requireCaseUser, async (req, res) => {
   try {
     const caseItem = await Case.findById(req.params.id);
 
