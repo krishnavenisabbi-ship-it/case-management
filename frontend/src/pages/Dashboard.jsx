@@ -369,6 +369,101 @@ export default function Dashboard() {
           </section>
         )}
 
+        {currentUser?.role === "admin" && activeTab === "cases" && (
+          <>
+            <section className="panel-card">
+              <div className="panel-head">
+                <div>
+                  <h2>Dashboard Preview</h2>
+                  <p>
+                    Admin can review dashboard layout and alignment here, but live case
+                    information stays hidden.
+                  </p>
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <Field label="State" type="select" value="" onChange={() => {}} options={[]} disabled placeholder="Preview Only" />
+                <Field label="District" type="select" value="" onChange={() => {}} options={[]} disabled placeholder="Preview Only" />
+                <Field label="Court Name" value="" onChange={() => {}} />
+                <Field label="Case Type" value="" onChange={() => {}} />
+                <Field label="Case Number" value="" onChange={() => {}} />
+                <Field label="Petitioner Name" value="" onChange={() => {}} />
+                <Field label="Respondent Name" value="" onChange={() => {}} />
+                <Field label="Case Filing Date" type="date" value="" onChange={() => {}} />
+                <Field label="Adjournment Date" type="date" value="" onChange={() => {}} />
+                <Field label="Step of Adjournment" value="" onChange={() => {}} />
+                <Field label="Other Side Advocate Name" value="" onChange={() => {}} />
+                <Field label="Phone Number" value="" onChange={() => {}} />
+                <Field
+                  label="Status"
+                  type="select"
+                  value=""
+                  onChange={() => {}}
+                  options={["Pending", "Disposed"]}
+                  disabled
+                  placeholder="Preview Only"
+                />
+                <label className="field field-wide">
+                  <span>Notes</span>
+                  <textarea
+                    className="dashboard-textarea"
+                    value=""
+                    onChange={() => {}}
+                    rows={3}
+                    placeholder="Preview only"
+                    readOnly
+                  />
+                </label>
+                <label className="field field-wide">
+                  <span>Attachments</span>
+                  <input className="dashboard-input" type="text" value="Preview only" readOnly />
+                </label>
+              </div>
+            </section>
+
+            <section className="panel-card">
+              <div className="panel-head panel-head-stack">
+                <div>
+                  <h2>Table Preview</h2>
+                  <p>Column structure is visible, but user case records are hidden from admin.</p>
+                </div>
+                <input className="dashboard-input" placeholder="Search disabled for admin preview" value="" readOnly />
+              </div>
+
+              <div className="table-wrap">
+                <table className="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>State</th>
+                      <th>District</th>
+                      <th>Court Name</th>
+                      <th>Case Type</th>
+                      <th>Case Number</th>
+                      <th>Petitioner Name</th>
+                      <th>Respondent Name</th>
+                      <th>Case Filing Date</th>
+                      <th>Adjournment Date</th>
+                      <th>Step of Adjournment</th>
+                      <th>Other Side Advocate Name</th>
+                      <th>Phone Number</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                      <th>Attachments</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td colSpan="16">Preview mode only. No case records are shown to admin.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+
         {currentUser?.role !== "admin" && activeTab === "cases" && (
           <>
             <section className="panel-card">
