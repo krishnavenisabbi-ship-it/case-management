@@ -9,40 +9,24 @@ import jwt from "jsonwebtoken";
 import Case from "./models/Case.js";
 import User from "./models/User.js";
 import { requireAdmin, verifyToken } from "./middleware/auth.js";
-
+import authRoutes from "./routes/auth.js";
 const app = express();
+
+
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://yourcase.in"
-    ],
-    credentials: true
+    origin: true,
+    credentials: true,
   })
 );
+app.use(express.json({ limit: "15mb" }));
+
+app.use("/api/auth", authRoutes);
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
-const allowedOrigins = [
-  "https://yourcase.in",
-  "https://www.yourcase.in",
-  "https://case-management-alpha.vercel.app",
-  "https://case-management-dkgs.onrender.com",
-  "http://localhost:5173",
-];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-  })
-);
-
-app.use(express.json({ limit: "15mb" }));
 
 mongoose
   .connect(process.env.MONGO_URI)

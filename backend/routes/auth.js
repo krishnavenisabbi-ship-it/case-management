@@ -1,18 +1,75 @@
 import express from "express";
-import User from "../models/User.js";   // ✅ IMPORT MODEL
-import verifyToken from "../middleware/authMiddleware.js"; // ✅ AUTH
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import verifyToken from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Register route
+
+// ✅ REGISTER (basic placeholder)
 router.post("/register", (req, res) => {
   res.json({ message: "Register working ✅" });
 });
 
-// Login route
+
+// ✅ LOGIN (basic placeholder)
 router.post("/login", (req, res) => {
   res.json({ message: "Login working ✅" });
 });
+
+
+// ✅ GOOGLE LOGIN (MAIN)
+router.post("/google", async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // 🔍 Check if user exists
+    let user = await User.findOne({ email });
+
+    // ➕ Create if not exists
+    if (!user) {
+      user = new User({
+        email,
+        name,
+        role: "user",
+        loginEnabled: true,
+      });
+      await user.save();
+    }
+
+    // 🔐 Create JWT token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // ✅ Send token + user
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        phone: user.phone || "",
+        loginEnabled: user.loginEnabled,
+      },
+    });
+
+  } catch (error) {
+    console.error("Google login error:", error);
+    res.status(500).json({ message: "Google login failed" });
+  }
+});
+
 
 // ✅ UPDATE USER DETAILS (PROTECTED)
 router.put("/update", verifyToken, async (req, res) => {
@@ -20,16 +77,25 @@ router.put("/update", verifyToken, async (req, res) => {
     const { name, phone } = req.body;
 
     const user = await User.findByIdAndUpdate(
-      req.user.id, // ✅ comes from middleware
+      req.user.id,
       { name, phone },
       { new: true }
     );
 
-    res.json(user);
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      phone: user.phone || "",
+      loginEnabled: user.loginEnabled,
+    });
+
   } catch (error) {
-    console.error(error);
+    console.error("Update error:", error);
     res.status(500).json({ message: "Update failed" });
   }
 });
+
 
 export default router;
