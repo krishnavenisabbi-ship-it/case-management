@@ -158,7 +158,7 @@ const requireCaseUser = (req, res, next) => {
 
 const withUser = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.user.email });
+  const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
@@ -219,10 +219,13 @@ app.post("/api/auth/google", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { email: user.email, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+  {
+    id: user._id,
+    role: user.role   // ✅ ADD THIS
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: "1d" }
+);
 
     res.json({
       token,

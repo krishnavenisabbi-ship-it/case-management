@@ -100,24 +100,33 @@ export default function Dashboard() {
       window.location.href = "/";
       return;
     }
-
+	console.log("INIT DASHBOARD CALLED");
     initializeDashboard();
   }, []);
 
   const initializeDashboard = async () => {
     try {
+		console.log("INIT DASHBOARD CALLED"); 
       setLoading(true);
+	  console.log("Calling /me API..."); 
       const meResponse = await axios.get(`${BASE_URL}/api/auth/me`, authConfig());
+	  console.log("ME RESPONSE:", meResponse.data);  // ✅ ADD HERE
+
       setCurrentUser(meResponse.data);
       setActiveTab(meResponse.data.role === "admin" ? "admin" : "cases");
       localStorage.setItem("user", JSON.stringify(meResponse.data));
 
-      await Promise.all([
-        meResponse.data.role === "admin" ? Promise.resolve() : fetchCases(),
-        meResponse.data.role === "admin" ? fetchUsers() : Promise.resolve(),
-      ]);
+      if (meResponse.data.role === "admin") {
+  try {
+    await fetchUsers();
+  } catch (err) {
+    console.error("Users fetch failed:", err);
+  }
+} else {
+  await fetchCases();
+}
     } catch (error) {
-      console.error(error);
+       console.error("INIT ERROR:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/";
@@ -310,8 +319,14 @@ const handleEditUser = async () => {
       authConfig()
     );
 
-    setCurrentUser(res.data);
-    localStorage.setItem("user", JSON.stringify(res.data));
+    
+    const updatedUser = {
+  ...currentUser,
+  ...res.data,
+};
+
+setCurrentUser(updatedUser);
+localStorage.setItem("user", JSON.stringify(updatedUser));
   } catch (error) {
     console.error(error);
     alert("Update failed");
@@ -327,20 +342,24 @@ const handleEditUser = async () => {
       authConfig()
     );
 
-    setCurrentUser(res.data);
-    localStorage.setItem("user", JSON.stringify(res.data));
+    const updatedUser = {
+      ...currentUser,
+      ...res.data,
+    };
+
+    setCurrentUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   } catch (error) {
     console.error(error);
     alert("Delete failed");
   }
 };
-  if (loading) {
+if (loading) {
   return <div className="dashboard-loading">Loading dashboard...</div>;
 }
 
 return (
   <div className="dashboard-shell">
- 
 
     {/* SIDEBAR */}
     <aside className="dashboard-sidebar">
@@ -376,13 +395,28 @@ return (
           )}
 
           {/* Admin */}
-          {currentUser?.role === "admin" && (
-            <div className="sidebar-card admin-card">
-              <h3>Admin</h3>
-              <p><strong>Name:</strong> Satya</p>
-              <p><strong>Phone:</strong> 9177231044</p>
-            </div>
-          )}
+        {currentUser?.role === "admin" && (
+  <div className="sidebar-card admin-card">
+    <h3>Admin</h3>
+
+    <p>
+      <strong>Name:</strong>{" "}
+      {currentUser?.name || "Satya"}
+    </p>
+
+    <p>
+      <strong>Phone:</strong>{" "}
+      {currentUser?.phone || "9177231044"}
+    </p>
+
+    <div className="card-actions">
+      <button onClick={handleEditUser}>Edit</button>
+      <button className="danger" onClick={handleDeleteUser}>
+        Delete
+      </button>
+    </div>
+  </div>
+)}
 
         </div>
 
