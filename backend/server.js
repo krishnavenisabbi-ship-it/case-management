@@ -11,6 +11,15 @@ import User from "./models/User.js";
 import { requireAdmin, verifyToken } from "./middleware/auth.js";
 
 const app = express();
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://yourcase.in"
+    ],
+    credentials: true
+  })
+);
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
 const allowedOrigins = [
