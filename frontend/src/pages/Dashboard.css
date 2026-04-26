@@ -504,7 +504,78 @@
   background: linear-gradient(180deg, var(--dash-bg) 0%, #eef4f6 100%);
   color: #10243e;
 }
+/* ================= SIDEBAR CARDS (GLOBAL) ================= */
 
+.sidebar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sidebar-card {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.sidebar-card h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.sidebar-card p {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+.sidebar-card button {
+  width: 100%;
+  padding: 6px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+/* Sidebar card actions */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.card-actions button {
+  flex: 1;
+  padding: 6px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.card-actions .danger {
+  background: #dc2626;
+  color: white;
+}
+.admin-card button {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.user-card button {
+  background: linear-gradient(135deg, #0f766e, #115e59);
+  color: white;
+}
 @media (max-width: 1120px) {
   .stats-grid,
   .form-grid {
@@ -543,5 +614,6 @@
 
   .panel-actions > * {
     width: 100%;
+	
   }
 }

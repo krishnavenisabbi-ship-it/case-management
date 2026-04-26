@@ -297,46 +297,120 @@ export default function Dashboard() {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
+const handleEditUser = async () => {
+  const newName = prompt("Enter name:", currentUser?.name);
+  const newPhone = prompt("Enter phone:", currentUser?.phone);
 
-  if (loading) {
-    return <div className="dashboard-loading">Loading dashboard...</div>;
+  if (!newName || !newPhone) return;
+
+  try {
+    const res = await axios.put(
+      `${BASE_URL}/api/auth/update`,
+      { name: newName, phone: newPhone },
+      authConfig()
+    );
+
+    setCurrentUser(res.data);
+    localStorage.setItem("user", JSON.stringify(res.data));
+  } catch (error) {
+    console.error(error);
+    alert("Update failed");
   }
+};
+ const handleDeleteUser = async () => {
+  if (!window.confirm("Delete details?")) return;
 
-  return (
-    <div className="dashboard-shell">
-      <aside className="dashboard-sidebar">
-        <div>
-          <div className="dashboard-brand">CMS</div>
-          <div className="dashboard-user-card">
-            <strong>{currentUser?.name || "User"}</strong>
-            <span>{currentUser?.email}</span>
-            <span className={`role-pill role-${currentUser?.role || "user"}`}>
-              {currentUser?.role || "user"}
-            </span>
-          </div>
+  try {
+    const res = await axios.put(
+      `${BASE_URL}/api/auth/update`,
+      { name: "", phone: "" },
+      authConfig()
+    );
 
-          <div className="dashboard-nav">
-            <button
-              className={activeTab === "cases" ? "nav-btn active" : "nav-btn"}
-              onClick={() => setActiveTab("cases")}
-            >
-              Cases
-            </button>
-            {currentUser?.role === "admin" && (
-              <button
-                className={activeTab === "admin" ? "nav-btn active" : "nav-btn"}
-                onClick={() => setActiveTab("admin")}
-              >
-                Admin Panel
-              </button>
-            )}
-          </div>
+    setCurrentUser(res.data);
+    localStorage.setItem("user", JSON.stringify(res.data));
+  } catch (error) {
+    console.error(error);
+    alert("Delete failed");
+  }
+};
+  if (loading) {
+  return <div className="dashboard-loading">Loading dashboard...</div>;
+}
+
+return (
+  <div className="dashboard-shell">
+ 
+
+    {/* SIDEBAR */}
+    <aside className="dashboard-sidebar">
+      <div>
+        <div className="dashboard-brand">CMS</div>
+
+        {/* USER INFO */}
+        <div className="dashboard-user-card">
+          <strong>{currentUser?.name || "User"}</strong>
+          <span>{currentUser?.email}</span>
+          <span className={`role-pill role-${currentUser?.role || "user"}`}>
+            {currentUser?.role || "user"}
+          </span>
         </div>
 
-        <button onClick={handleLogout} className="logout-btn">
-          Logout
-        </button>
-      </aside>
+        {/* SIDEBAR CARDS */}
+        <div className="sidebar-cards">
+
+          {/* Advocate (only user) */}
+          {currentUser?.role !== "admin" && (
+            <div className="sidebar-card advocate-card">
+              <h3>Advocate</h3>
+              <p><strong>Name:</strong> {currentUser?.name}</p>
+              <p><strong>Phone:</strong> {currentUser?.phone || "Not added"}</p>
+
+              <div className="card-actions">
+                <button onClick={handleEditUser}>Edit</button>
+                <button className="danger" onClick={handleDeleteUser}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Admin */}
+          {currentUser?.role === "admin" && (
+            <div className="sidebar-card admin-card">
+              <h3>Admin</h3>
+              <p><strong>Name:</strong> Satya</p>
+              <p><strong>Phone:</strong> 9177231044</p>
+            </div>
+          )}
+
+        </div>
+
+        {/* NAVIGATION */}
+        <div className="dashboard-nav">
+          <button
+            className={activeTab === "cases" ? "nav-btn active" : "nav-btn"}
+            onClick={() => setActiveTab("cases")}
+          >
+            Cases
+          </button>
+
+          {currentUser?.role === "admin" && (
+            <button
+              className={activeTab === "admin" ? "nav-btn active" : "nav-btn"}
+              onClick={() => setActiveTab("admin")}
+            >
+              Admin Panel
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* LOGOUT */}
+      <button onClick={handleLogout} className="logout-btn">
+        Logout
+      </button>
+    </aside>
 
       <main className="dashboard-main">
         <div className="dashboard-header">
