@@ -44,7 +44,7 @@ mongoose
     console.error("MongoDB Error", err);
     process.exit(1);
   });
-
+app.use("/api/auth", authRoutes);
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
