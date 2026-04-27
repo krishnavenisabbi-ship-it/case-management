@@ -1,7 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import verifyToken from "../middleware/authMiddleware.js";
+import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -97,5 +97,27 @@ router.put("/update", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ GET CURRENT USER (IMPORTANT)
+router.get("/me", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      phone: user.phone || "",
+      loginEnabled: user.loginEnabled,
+    });
+
+  } catch (error) {
+    console.error("Me route error:", error);
+    res.status(500).json({ message: "Failed to fetch user" });
+  }
+});
 export default router;

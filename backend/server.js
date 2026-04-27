@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 
 import Case from "./models/Case.js";
 import User from "./models/User.js";
-import { requireAdmin, verifyToken } from "./middleware/auth.js";
+
+import { verifyToken, withUser, requireAdmin } from "./middleware/auth.js";
 import authRoutes from "./routes/auth.js";
 const app = express();
 
@@ -148,104 +149,7 @@ const requireCaseUser = (req, res, next) => {
 
   next();
 };
-
-const withUser = async (req, res, next) => {
-  try {
-  const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    req.currentUser = user;
-    next();
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-app.post("/api/auth/google", async (req, res) => {
-  try {
-    const { email, name } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email required" });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: "JWT secret missing" });
-    }
-
-    const normalizedEmail = email.toLowerCase();
-    const isAdminEmail = isPrivilegedEmail(normalizedEmail);
-    const defaultRole = isAdminEmail ? "admin" : "user";
-
-    let user = await User.findOne({ email: normalizedEmail });
-
-    if (!user) {
-      user = await User.create({
-        email: normalizedEmail,
-        name: name || normalizedEmail,
-        role: defaultRole,
-        loginEnabled: isAdminEmail,
-        lastLoginAt: new Date(),
-      });
-    } else {
-      user.name = name || user.name || normalizedEmail;
-      if (isAdminEmail) {
-        user.role = "admin";
-        user.loginEnabled = true;
-      }
-      if (!user.loginEnabled && !isAdminEmail) {
-        return res.status(403).json({
-          message: "Your login access is disabled. Please contact admin.",
-        });
-      }
-      user.lastLoginAt = new Date();
-      await user.save();
-    }
-
-    if (!user.loginEnabled && !isAdminEmail) {
-      return res.status(403).json({
-        message: "Your login access is disabled. Please contact admin.",
-      });
-    }
-
-    const token = jwt.sign(
-  {
-    id: user._id,
-    role: user.role   // ✅ ADD THIS
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: "1d" }
-);
-
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        loginEnabled: user.loginEnabled,
-      },
-    });
-  } catch (err) {
-    console.error("Auth error:", err);
-    res.status(500).json({ message: "Auth failed" });
-  }
-});
-
-app.get("/api/auth/me", verifyToken, withUser, async (req, res) => {
-  res.json({
-    id: req.currentUser._id,
-    email: req.currentUser.email,
-    name: req.currentUser.name,
-    role: req.currentUser.role,
-    loginEnabled: req.currentUser.loginEnabled,
-  });
-});
-
+ 
 app.get("/api/cases", verifyToken, withUser, async (req, res) => {
   try {
     if (req.currentUser.role === "admin") {
