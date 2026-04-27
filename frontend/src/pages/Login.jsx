@@ -3,7 +3,8 @@ import axios from "axios";
 import logo from "../assets/logo.png";
 
 const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://case-management-dkgs.onrender.com";
+  import.meta.env.VITE_BACKEND_URL ||"https://case-management-fei4.onrender.com";
+
 
 export default function Login() {
   const handleSuccess = async (res) => {

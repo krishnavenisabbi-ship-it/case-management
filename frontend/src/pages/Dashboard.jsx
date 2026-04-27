@@ -4,7 +4,7 @@ import { INDIA_STATE_DISTRICTS, INDIA_STATES } from "../data/indiaLocations";
 import "./Dashboard.css";
 
 const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL || "https://case-management-dkgs.onrender.com";
+  import.meta.env.VITE_BACKEND_URL || "https://case-management-fei4.onrender.com"
 
 const emptyForm = {
   state: "",
