@@ -27,26 +27,33 @@ router.post("/google", async (req, res) => {
 
     const { email, name } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
+   const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
-    // rest of your code...
+// 🔥 decide role
+const role =
+  email.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase()
+    ? "admin"
+    : "user";
 
+// 🔍 Check if user exists
+let user = await User.findOne({ email });
 
-    // 🔍 Check if user exists
-    let user = await User.findOne({ email });
-
-    // ➕ Create if not exists
-    if (!user) {
-      user = new User({
-        email,
-        name,
-        role: "user",
-        loginEnabled: true,
-      });
-      await user.save();
-    }
+if (!user) {
+  // ➕ Create new user
+  user = new User({
+    email,
+    name,
+    role,
+    loginEnabled: true,
+  });
+  await user.save();
+} else {
+  // 🔥 UPDATE ROLE IF NEEDED
+  if (user.role !== role) {
+    user.role = role;
+    await user.save();
+  }
+}
 
     // 🔐 Create JWT token
     const token = jwt.sign(
