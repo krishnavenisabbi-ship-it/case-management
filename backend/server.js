@@ -1,6 +1,6 @@
+
 import dotenv from "dotenv";
 dotenv.config();
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -20,19 +20,19 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.some(o => origin.startsWith(o))) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: [
+      "https://yourcase.in",
+      "https://www.yourcase.in",
+      "http://localhost:5173"
+    ],
     credentials: true
   })
 );
+
+app.options("*", cors());
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
+console.log("MONGO_URI:", process.env.MONGO_URI);
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
