@@ -12,18 +12,27 @@ import User from "./models/User.js";
 import { verifyToken, withUser, requireAdmin } from "./middleware/auth.js";
 import authRoutes from "./routes/auth.js";
 const app = express();
-
-
+const allowedOrigins = [
+  "https://yourcase.in",
+  "https://www.yourcase.in",
+  "http://localhost:5173"
+];
 
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.some(o => origin.startsWith(o))) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
-app.use(express.json({ limit: "15mb" }));
-
-app.use("/api/auth", authRoutes);
+);
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
 
