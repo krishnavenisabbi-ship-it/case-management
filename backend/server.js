@@ -12,6 +12,8 @@ import User from "./models/User.js";
 import { verifyToken, withUser, requireAdmin } from "./middleware/auth.js";
 import authRoutes from "./routes/auth.js";
 const app = express();
+app.use(express.json());
+
 const allowedOrigins = [
   "https://yourcase.in",
   "https://www.yourcase.in",
