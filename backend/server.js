@@ -29,14 +29,10 @@ app.use(
 
       return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true,
-  });
-  
+    credentials: true
+  })
+);
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
-
-
-
-
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
