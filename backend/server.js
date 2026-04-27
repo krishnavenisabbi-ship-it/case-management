@@ -30,9 +30,8 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
-);
-);
+  });
+  
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 
 
