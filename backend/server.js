@@ -20,16 +20,18 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: [
-      "https://yourcase.in",
-      "https://www.yourcase.in",
-      "http://localhost:5173"
-    ],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true
   })
 );
 
-app.options("*", cors());
+app.options("*", cors()); // handle preflight requests
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
 console.log("MONGO_URI:", process.env.MONGO_URI);
 

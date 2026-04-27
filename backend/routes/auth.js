@@ -19,13 +19,20 @@ router.post("/login", (req, res) => {
 
 
 // ✅ GOOGLE LOGIN (MAIN)
+
+ 
 router.post("/google", async (req, res) => {
   try {
+    console.log("Google login request body:", req.body); // <-- add here
+
     const { email, name } = req.body;
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
+
+    // rest of your code...
+
 
     // 🔍 Check if user exists
     let user = await User.findOne({ email });
