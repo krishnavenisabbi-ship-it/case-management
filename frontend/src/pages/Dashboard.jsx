@@ -24,6 +24,11 @@ const emptyForm = {
   attachments: [],
 };
 
+const emptyProfileForm = {
+  name: "",
+  phone: "",
+};
+
 const authConfig = () => ({
   headers: {
     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -91,6 +96,8 @@ export default function Dashboard() {
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState(emptyProfileForm);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -306,36 +313,61 @@ export default function Dashboard() {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
-const handleEditUser = async () => {
-  const newName = prompt("Enter name:", currentUser?.name);
-  const newPhone = prompt("Enter phone:", currentUser?.phone);
+  const openProfileEditModal = () => {
+    setProfileForm({
+      name: currentUser?.name || "",
+      phone: currentUser?.phone || "",
+    });
+    setIsProfileEditOpen(true);
+  };
 
-  if (!newName || !newPhone) return;
+  const closeProfileEditModal = () => {
+    setIsProfileEditOpen(false);
+    setProfileForm(emptyProfileForm);
+  };
 
-  try {
-    const res = await axios.put(
-      `${BASE_URL}/api/auth/update`,
-      { name: newName, phone: newPhone },
-      authConfig()
-    );
+  const handleEditUser = async () => {
+    if (!profileForm.name.trim()) {
+      alert("Name is required");
+      return;
+    }
 
-    
-    const updatedUser = {
-  ...currentUser,
-  ...res.data,
-};
+    try {
+      setSaving(true);
+      const res = await axios.put(
+        `${BASE_URL}/api/auth/update`,
+        {
+          name: profileForm.name.trim(),
+          phone: profileForm.phone.trim(),
+        },
+        authConfig()
+      );
 
-setCurrentUser(updatedUser);
-localStorage.setItem("user", JSON.stringify(updatedUser));
-  } catch (error) {
-    console.error(error);
-    alert("Update failed");
-  }
-};
- const handleDeleteUser = async () => {
+      const updatedUser = {
+        ...currentUser,
+        ...res.data,
+      };
+
+      setCurrentUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      closeProfileEditModal();
+
+      if (updatedUser.role === "admin") {
+        await fetchUsers();
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
   if (!window.confirm("Delete details?")) return;
 
   try {
+    setSaving(true);
     const res = await axios.put(
       `${BASE_URL}/api/auth/update`,
       { name: "", phone: "" },
@@ -349,9 +381,15 @@ localStorage.setItem("user", JSON.stringify(updatedUser));
 
     setCurrentUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    if (updatedUser.role === "admin") {
+      await fetchUsers();
+    }
   } catch (error) {
     console.error(error);
-    alert("Delete failed");
+    alert(error.response?.data?.message || "Delete failed");
+  } finally {
+    setSaving(false);
   }
 };
 if (loading) {
@@ -386,7 +424,7 @@ return (
               <p><strong>Phone:</strong> {currentUser?.phone || "Not added"}</p>
 
               <div className="card-actions">
-                <button onClick={handleEditUser}>Edit</button>
+                <button onClick={openProfileEditModal}>Edit</button>
                 <button className="danger" onClick={handleDeleteUser}>
                   Delete
                 </button>
@@ -410,7 +448,7 @@ return (
     </p>
 
     <div className="card-actions">
-      <button onClick={handleEditUser}>Edit</button>
+      <button onClick={openProfileEditModal}>Edit</button>
       <button className="danger" onClick={handleDeleteUser}>
         Delete
       </button>
@@ -761,6 +799,49 @@ return (
               </button>
               <button className="primary-btn" onClick={handleUpdateCase} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isProfileEditOpen && (
+        <div className="modal-backdrop" onClick={closeProfileEditModal}>
+          <div className="modal-card profile-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <h2>Edit Profile</h2>
+                <p>Update the displayed name and phone number for this account.</p>
+              </div>
+              <button className="close-btn" onClick={closeProfileEditModal}>
+                Close
+              </button>
+            </div>
+
+            <div className="form-grid profile-form-grid">
+              <Field
+                label="Name"
+                value={profileForm.name}
+                onChange={(value) =>
+                  setProfileForm((prev) => ({ ...prev, name: value }))
+                }
+              />
+              <Field
+                label="Phone Number"
+                type="tel"
+                value={profileForm.phone}
+                onChange={(value) =>
+                  setProfileForm((prev) => ({ ...prev, phone: value }))
+                }
+              />
+            </div>
+
+            <div className="panel-actions">
+              <button className="secondary-btn" onClick={closeProfileEditModal}>
+                Cancel
+              </button>
+              <button className="primary-btn" onClick={handleEditUser} disabled={saving}>
+                {saving ? "Saving..." : "Save Profile"}
               </button>
             </div>
           </div>
