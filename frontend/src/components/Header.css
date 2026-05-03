@@ -1,19 +1,21 @@
 .header {
-  height: 70px;
+  min-height: 108px;
   background: #111;
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
+  padding: 12px 40px;
 }
 
 .logo h2 {
   font-weight: 700;
 }
 .logo img {
-  height: 50px;
+  height: 90px;
+  width: auto;
   object-fit: contain;
+  display: block;
 }
 
 .logo span {
