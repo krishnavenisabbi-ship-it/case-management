@@ -78,6 +78,7 @@ const buildCasePayload = (body, actor) => ({
   courtName: body.courtName || "",
   caseType: body.caseType || body.type || "",
   caseNumber: body.caseNumber || "",
+  clientName: body.clientName || "",
   petitioner: body.petitioner || "",
   respondent: body.respondent || "",
   filingDate: body.filingDate || body.date || "",
@@ -218,6 +219,7 @@ app.put("/api/cases/:id", verifyToken, withUser, requireCaseUser, async (req, re
     existingCase.district = req.body.district || "";
     existingCase.courtName = req.body.courtName || "";
     existingCase.caseType = req.body.caseType || req.body.type || "";
+    existingCase.clientName = req.body.clientName || "";
     existingCase.petitioner = req.body.petitioner || "";
     existingCase.respondent = req.body.respondent || "";
     existingCase.filingDate = req.body.filingDate || req.body.date || "";

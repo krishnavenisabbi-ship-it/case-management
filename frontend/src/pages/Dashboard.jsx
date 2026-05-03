@@ -12,6 +12,7 @@ const emptyForm = {
   courtName: "",
   caseType: "",
   caseNumber: "",
+  clientName: "",
   petitioner: "",
   respondent: "",
   filingDate: "",
@@ -71,6 +72,7 @@ const normalizeCaseForForm = (caseItem) => ({
   courtName: caseItem.courtName || "",
   caseType: caseItem.caseType || caseItem.type || "",
   caseNumber: caseItem.caseNumber || "",
+  clientName: caseItem.clientName || "",
   petitioner: caseItem.petitioner || "",
   respondent: caseItem.respondent || "",
   filingDate: toInputDate(caseItem.filingDate || caseItem.date),
@@ -161,6 +163,7 @@ export default function Dashboard() {
         caseItem.courtName,
         caseItem.caseType || caseItem.type,
         caseItem.caseNumber,
+        caseItem.clientName,
         caseItem.petitioner,
         caseItem.respondent,
         caseItem.stepOfAdjournment,
@@ -534,13 +537,14 @@ return (
                 <Field label="Court Name" value="" onChange={() => {}} />
                 <Field label="Case Type" value="" onChange={() => {}} />
                 <Field label="Case Number" value="" onChange={() => {}} />
+                <Field label="Client Name" value="" onChange={() => {}} />
                 <Field label="Petitioner Name" value="" onChange={() => {}} />
                 <Field label="Respondent Name" value="" onChange={() => {}} />
                 <Field label="Case Filing Date" type="date" value="" onChange={() => {}} />
                 <Field label="Adjournment Date" type="date" value="" onChange={() => {}} />
                 <Field label="Step of Adjournment" value="" onChange={() => {}} />
                 <Field label="Other Side Advocate Name" value="" onChange={() => {}} />
-                <Field label="Phone Number" value="" onChange={() => {}} />
+                <Field label="Client Phone Number" value="" onChange={() => {}} />
                 <Field
                   label="Status"
                   type="select"
@@ -586,13 +590,14 @@ return (
                       <th>Court Name</th>
                       <th>Case Type</th>
                       <th>Case Number</th>
+                      <th>Client Name</th>
                       <th>Petitioner Name</th>
                       <th>Respondent Name</th>
                       <th>Case Filing Date</th>
                       <th>Adjournment Date</th>
                       <th>Step of Adjournment</th>
                       <th>Other Side Advocate Name</th>
-                      <th>Phone Number</th>
+                      <th>Client Phone Number</th>
                       <th>Status</th>
                       <th>Notes</th>
                       <th>Attachments</th>
@@ -601,7 +606,7 @@ return (
                   </thead>
                   <tbody>
                     <tr>
-                      <td colSpan="16">Preview mode only. No case records are shown to admin.</td>
+                      <td colSpan="17">Preview mode only. No case records are shown to admin.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -638,7 +643,7 @@ return (
               <div className="panel-head panel-head-stack">
                 <div>
                   <h2>Case Records</h2>
-                  <p>Search by state, district, court, case number, party, or phone.</p>
+                  <p>Search by state, district, court, case number, client, party, or client phone.</p>
                 </div>
                 <input
                   className="dashboard-input"
@@ -657,13 +662,14 @@ return (
                       <th>Court Name</th>
                       <th>Case Type</th>
                       <th>Case Number</th>
+                      <th>Client Name</th>
                       <th>Petitioner Name</th>
                       <th>Respondent Name</th>
                       <th>Case Filing Date</th>
                       <th>Adjournment Date</th>
                       <th>Step of Adjournment</th>
                       <th>Other Side Advocate Name</th>
-                      <th>Phone Number</th>
+                      <th>Client Phone Number</th>
                       <th>Status</th>
                       <th>Notes</th>
                       <th>Attachments</th>
@@ -678,6 +684,7 @@ return (
                         <td>{caseItem.courtName || "-"}</td>
                         <td>{caseItem.caseType || caseItem.type || "-"}</td>
                         <td>{caseItem.caseNumber || "-"}</td>
+                        <td>{caseItem.clientName || "-"}</td>
                         <td>{caseItem.petitioner || "-"}</td>
                         <td>{caseItem.respondent || "-"}</td>
                         <td>{formatDisplayDate(caseItem.filingDate || caseItem.date)}</td>
@@ -891,6 +898,11 @@ function CaseForm({ form, setForm, onAttachmentSelect, onAttachmentRemove }) {
         onChange={(value) => setForm((prev) => ({ ...prev, caseNumber: value }))}
       />
       <Field
+        label="Client Name"
+        value={form.clientName}
+        onChange={(value) => setForm((prev) => ({ ...prev, clientName: value }))}
+      />
+      <Field
         label="Petitioner Name"
         value={form.petitioner}
         onChange={(value) => setForm((prev) => ({ ...prev, petitioner: value }))}
@@ -927,7 +939,7 @@ function CaseForm({ form, setForm, onAttachmentSelect, onAttachmentRemove }) {
         }
       />
       <Field
-        label="Phone Number"
+        label="Client Phone Number"
         value={form.phone}
         onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))}
       />

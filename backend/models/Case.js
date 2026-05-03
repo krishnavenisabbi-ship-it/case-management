@@ -19,6 +19,7 @@ const caseSchema = new mongoose.Schema(
     courtName: String,
     caseType: String,
     caseNumber: String,
+    clientName: String,
     petitioner: String,
     respondent: String,
     filingDate: String,
