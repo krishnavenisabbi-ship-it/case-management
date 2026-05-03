@@ -122,7 +122,7 @@ export default function Dashboard() {
 	  console.log("ME RESPONSE:", meResponse.data);  // ✅ ADD HERE
 
       setCurrentUser(meResponse.data);
-      setActiveTab(meResponse.data.role === "admin" ? "admin" : "cases");
+      setActiveTab("cases");
       localStorage.setItem("user", JSON.stringify(meResponse.data));
 
       await Promise.all([
@@ -502,19 +502,6 @@ return (
             </article>
           ))}
         </section>
-
-        {currentUser?.role === "admin" && (
-          <section className="panel-card">
-            <div className="panel-head">
-              <div>
-                <h2>Admin Access Control</h2>
-                <p>
-                  This admin account can manage user logins and also access case data.
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
 
         {activeTab === "cases" && (
           <>
