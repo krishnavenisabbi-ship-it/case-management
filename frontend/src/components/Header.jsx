@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import "./Header.css";
-import logo from "../assets/logo.png";   // 👈 import
+import logo from "../assets/logo.png";
 
 const Header = () => {
   return (
     <header className="header">
 
-      {/* LOGO IMAGE */}
+      {/* LOGO */}
       <div className="logo">
         <img src={logo} alt="logo" />
       </div>
@@ -19,7 +19,12 @@ const Header = () => {
         <Link to="/contact">Contact</Link>
       </nav>
 
-      <button className="login-btn">Login</button>
+      {/* LOGIN BUTTON */}
+      <div className="header-btn">
+        <Link to="/login">
+          <button className="login-btn">Login</button>
+        </Link>
+      </div>
 
     </header>
   );
