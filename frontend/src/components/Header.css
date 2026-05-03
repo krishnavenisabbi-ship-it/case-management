@@ -1,0 +1,41 @@
+.header {
+  height: 70px;
+  background: #111;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.logo h2 {
+  font-weight: 700;
+}
+.logo img {
+  height: 50px;
+  object-fit: contain;
+}
+
+.logo span {
+  color: red;
+}
+
+.nav a {
+  margin: 0 15px;
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+}
+
+.nav a:hover {
+  color: red;
+}
+
+.header-btn button {
+  background: red;
+  border: none;
+  padding: 8px 16px;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
