@@ -35,6 +35,7 @@ app.use(
 
 app.options("*", cors()); // handle preflight requests
 const PRIMARY_ADMIN_EMAIL = "krishnavenisabbi@gmail.com";
+const APP_TIMEZONE = process.env.APP_TIMEZONE || "Asia/Kolkata";
 console.log("MONGO_URI:", process.env.MONGO_URI);
 
 mongoose
@@ -96,6 +97,51 @@ const buildCasePayload = (body, actor) => ({
   createdByName: actor.name || actor.email,
 });
 
+const getTimeParts = (date = new Date(), timeZone = APP_TIMEZONE) => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  return Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+};
+
+const getDateKeyInTimeZone = (date = new Date(), timeZone = APP_TIMEZONE) => {
+  const { year, month, day } = getTimeParts(date, timeZone);
+  return `${year}-${month}-${day}`;
+};
+
+const addDaysToDateKey = (dateKey, days) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day + days));
+  return utcDate.toISOString().slice(0, 10);
+};
+
+const normalizeDateKey = (value) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toISOString().slice(0, 10);
+};
+
 const formatSmsDate = (value) => {
   if (!value) return "not set";
 
@@ -148,6 +194,184 @@ const sendAdjournmentSms = async ({ phone, caseNumber, adjournmentDate }) => {
   }
 };
 
+const sendSmsMessage = async ({ phone, message }) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_PHONE_NUMBER;
+
+  if (!sid || !token || !from || !phone || !message) {
+    return false;
+  }
+
+  const body = new URLSearchParams({
+    To: phone,
+    From: from,
+    Body: message,
+  });
+
+  const response = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString(
+          "base64"
+        )}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body,
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "SMS send failed");
+  }
+
+  return true;
+};
+
+const buildClientReminderMessage = (caseItem) => {
+  const advocateName = caseItem.createdByName || "your advocate";
+  const clientName = caseItem.clientName || caseItem.petitioner || "Client";
+  return `${clientName}, your case ${caseItem.caseNumber} is adjourned tomorrow (${formatSmsDate(
+    caseItem.adjournmentDate
+  )}). Advocate: ${advocateName}.`;
+};
+
+const buildAdvocateReminderMessage = (advocateName, casesForAdvocate) => {
+  const count = casesForAdvocate.length;
+  const caseList = casesForAdvocate
+    .slice(0, 5)
+    .map((caseItem) => caseItem.caseNumber)
+    .filter(Boolean)
+    .join(", ");
+  const suffix =
+    count > 5 && caseList
+      ? ` and ${count - 5} more`
+      : "";
+
+  return `${advocateName || "Advocate"}, tomorrow you have ${count} case${
+    count === 1 ? "" : "s"
+  } to attend (${formatSmsDate(casesForAdvocate[0]?.adjournmentDate)}).${
+    caseList ? ` Cases: ${caseList}${suffix}.` : ""
+  }`;
+};
+
+let lastReminderRunDateKey = "";
+let reminderJobRunning = false;
+
+const runReminderJob = async () => {
+  if (reminderJobRunning) {
+    return;
+  }
+
+  const nowParts = getTimeParts(new Date());
+  const todayDateKey = `${nowParts.year}-${nowParts.month}-${nowParts.day}`;
+  const currentHour = Number(nowParts.hour);
+  const currentMinute = Number(nowParts.minute);
+
+  if (currentHour !== 17 || currentMinute > 10 || lastReminderRunDateKey === todayDateKey) {
+    return;
+  }
+
+  reminderJobRunning = true;
+
+  try {
+    const targetAdjournmentDateKey = addDaysToDateKey(todayDateKey, 1);
+    const tomorrowCases = await Case.find({
+      adjournmentDate: targetAdjournmentDateKey,
+      status: { $ne: "Disposed" },
+    }).lean();
+
+    const normalizedTomorrowCases = tomorrowCases.filter(
+      (caseItem) => normalizeDateKey(caseItem.adjournmentDate) === targetAdjournmentDateKey
+    );
+
+    for (const caseItem of normalizedTomorrowCases) {
+      if (
+        caseItem.phone &&
+        caseItem.clientReminderDateKey !== targetAdjournmentDateKey
+      ) {
+        try {
+          await sendSmsMessage({
+            phone: caseItem.phone,
+            message: buildClientReminderMessage(caseItem),
+          });
+
+          await Case.findByIdAndUpdate(caseItem._id, {
+            clientReminderDateKey: targetAdjournmentDateKey,
+          });
+        } catch (smsError) {
+          console.error(
+            `Client SMS error for case ${caseItem.caseNumber}:`,
+            smsError.message
+          );
+        }
+      }
+    }
+
+    const advocateEmails = [
+      ...new Set(
+        normalizedTomorrowCases.map((caseItem) => caseItem.createdByEmail).filter(Boolean)
+      ),
+    ];
+
+    const advocateUsers = await User.find({ email: { $in: advocateEmails } }).lean();
+    const advocateUserMap = new Map(
+      advocateUsers.map((user) => [user.email?.toLowerCase(), user])
+    );
+
+    const advocateGroups = normalizedTomorrowCases.reduce((groups, caseItem) => {
+      const emailKey = caseItem.createdByEmail?.toLowerCase();
+      if (!emailKey || caseItem.advocateReminderDateKey === targetAdjournmentDateKey) {
+        return groups;
+      }
+
+      const user = advocateUserMap.get(emailKey);
+      if (!user?.phone) {
+        return groups;
+      }
+
+      if (!groups.has(emailKey)) {
+        groups.set(emailKey, {
+          user,
+          cases: [],
+        });
+      }
+
+      groups.get(emailKey).cases.push(caseItem);
+      return groups;
+    }, new Map());
+
+    for (const [emailKey, group] of advocateGroups.entries()) {
+      try {
+        await sendSmsMessage({
+          phone: group.user.phone,
+          message: buildAdvocateReminderMessage(group.user.name, group.cases),
+        });
+
+        await Case.updateMany(
+          {
+            _id: { $in: group.cases.map((caseItem) => caseItem._id) },
+          },
+          {
+            $set: { advocateReminderDateKey: targetAdjournmentDateKey },
+          }
+        );
+      } catch (smsError) {
+        console.error(`Advocate SMS error for ${emailKey}:`, smsError.message);
+      }
+    }
+
+    lastReminderRunDateKey = todayDateKey;
+  } catch (error) {
+    console.error("Reminder job failed:", error.message);
+  } finally {
+    reminderJobRunning = false;
+  }
+};
+
 const canManageCase = (currentUser, caseItem) =>
   currentUser?.role !== "admin" && caseItem.createdByEmail === currentUser?.email;
 
@@ -178,18 +402,6 @@ app.post("/api/cases", verifyToken, withUser, requireCaseUser, async (req, res) 
   try {
     const newCase = new Case(buildCasePayload(req.body, req.currentUser));
     const savedCase = await newCase.save();
-
-    if (savedCase.phone && savedCase.adjournmentDate) {
-      try {
-        await sendAdjournmentSms({
-          phone: savedCase.phone,
-          caseNumber: savedCase.caseNumber,
-          adjournmentDate: savedCase.adjournmentDate,
-        });
-      } catch (smsError) {
-        console.error("SMS error:", smsError.message);
-      }
-    }
 
     res.status(201).json(savedCase);
   } catch (error) {
@@ -235,22 +447,7 @@ app.put("/api/cases/:id", verifyToken, withUser, requireCaseUser, async (req, re
     existingCase.notes = req.body.notes || "";
     existingCase.attachments = attachments;
 
-    const wasAdjournmentChanged =
-      existingCase.isModified("adjournmentDate") || existingCase.isModified("phone");
-
     const updated = await existingCase.save();
-
-    if (wasAdjournmentChanged && updated.phone && updated.adjournmentDate) {
-      try {
-        await sendAdjournmentSms({
-          phone: updated.phone,
-          caseNumber: updated.caseNumber,
-          adjournmentDate: updated.adjournmentDate,
-        });
-      } catch (smsError) {
-        console.error("SMS error:", smsError.message);
-      }
-    }
 
     res.json(updated);
   } catch (error) {
@@ -361,3 +558,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+setInterval(runReminderJob, 60 * 1000);
+runReminderJob();

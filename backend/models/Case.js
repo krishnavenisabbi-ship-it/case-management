@@ -30,6 +30,8 @@ const caseSchema = new mongoose.Schema(
     phone: String,
     date: String,
     adjournmentDate: String,
+    clientReminderDateKey: String,
+    advocateReminderDateKey: String,
     status: String,
     notes: String,
     createdByEmail: String,
