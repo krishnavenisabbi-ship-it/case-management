@@ -373,20 +373,17 @@ const runReminderJob = async () => {
 };
 
 const canManageCase = (currentUser, caseItem) =>
-  currentUser?.role !== "admin" && caseItem.createdByEmail === currentUser?.email;
+  currentUser?.role === "admin" || caseItem.createdByEmail === currentUser?.email;
 
 const requireCaseUser = (req, res, next) => {
-  if (req.currentUser?.role === "admin") {
-    return res.status(403).json({ message: "Admins cannot access case data" });
-  }
-
   next();
 };
  
 app.get("/api/cases", verifyToken, withUser, async (req, res) => {
   try {
     if (req.currentUser.role === "admin") {
-      return res.json([]);
+      const cases = await Case.find().sort({ createdAt: -1 });
+      return res.json(cases);
     }
 
     const cases = await Case.find({ createdByEmail: req.currentUser.email }).sort({
