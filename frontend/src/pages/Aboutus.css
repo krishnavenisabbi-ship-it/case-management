@@ -1,0 +1,142 @@
+/* ===== MAIN CONTAINER ===== */
+.about-container {
+  padding: 50px 20px;
+  max-width: 1200px;
+  margin: auto;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to right, #f4f8ff, #eef5ff);
+}
+
+/* ===== HEADER ===== */
+.about-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.about-logo {
+  width: 240px;
+  max-width: 100%;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 18px;
+  color: #2f6fed;
+  font-weight: 500;
+}
+
+/* ===== SECTIONS ===== */
+.about-section {
+  margin-bottom: 35px;
+  padding: 25px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
+}
+
+.about-section:hover {
+  transform: translateY(-3px);
+}
+
+.about-section h2 {
+  color: #1e3a5f;
+  margin-bottom: 15px;
+  border-left: 5px solid #2f6fed;
+  padding-left: 12px;
+}
+
+.about-section p {
+  color: #444;
+  line-height: 1.7;
+}
+
+/* ===== LIST ===== */
+.about-section ul {
+  padding-left: 20px;
+}
+
+.about-section ul li {
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 15px;
+}
+
+/* ===== FEATURES GRID ===== */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+/* ===== FEATURE CARD ===== */
+.feature-card {
+  background: linear-gradient(135deg, #ffffff, #f0f6ff);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #e3ecff;
+  transition: all 0.3s ease;
+}
+
+.feature-card h3 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* HOVER EFFECT */
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== FLOW DIAGRAM ===== */
+.flow-diagram {
+  width: 100%;
+  max-width: 950px;
+  display: block;
+  margin: 25px auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== FOOTER ===== */
+.about-footer {
+  text-align: center;
+  margin-top: 50px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .about-container {
+    padding: 30px 15px;
+  }
+
+  .about-logo {
+    width: 180px;
+  }
+
+  .about-header h1 {
+    font-size: 26px;
+  }
+
+  .tagline {
+    font-size: 16px;
+  }
+
+  .about-section {
+    padding: 20px;
+  }
+
+  .feature-card {
+    padding: 15px;
+  }
+}
