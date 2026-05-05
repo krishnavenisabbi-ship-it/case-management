@@ -7,7 +7,7 @@ const Home = () => {
     <div className="home">
 
       {/* HERO SECTION */}
-      <section className="hero">
+      <section className="hero pt-[90px] px-4">
         <div className="hero-left">
           <h1>
             Manage Every Case.<br />

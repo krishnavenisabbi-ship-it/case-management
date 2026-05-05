@@ -9,20 +9,27 @@ import Login from "./pages/Login";
 
 function App() {
   const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <>
-      {/* Hide Header on Login Page */}
-      {location.pathname !== "/login" && <Header />}
+      {/* HEADER */}
+      {!isLoginPage && <Header />}
 
-      {/* ROUTES */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/contact" element={<Contact />} />
-      </Routes>
+      {/* MAIN CONTENT */}
+      <main className={`${!isLoginPage ? "pt-[90px]" : ""}`}>
+        <div className="max-w-[1200px] mx-auto px-4">
+
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+
+        </div>
+      </main>
     </>
   );
 }
