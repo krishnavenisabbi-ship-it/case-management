@@ -10,7 +10,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 40px 60px;
+
+  padding: 100px 60px 40px;  /* 👈 KEY FIX */
+
   background: linear-gradient(to right, #f8f9fb, #eef1f5);
   gap: 40px;
 }
