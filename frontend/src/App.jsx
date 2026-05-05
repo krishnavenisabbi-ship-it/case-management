@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -7,10 +8,14 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 
 function App() {
+  const location = useLocation();
+
   return (
     <>
-      <Header />
+      {/* Hide Header on Login Page */}
+      {location.pathname !== "/login" && <Header />}
 
+      {/* ROUTES */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
