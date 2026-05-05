@@ -1,11 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body {
+
+/* ===== GLOBAL RESET ===== */
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-.dashboard-container {
-  margin-top: 70px; /* adjust based on header height */
+/* ===== BODY ===== */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8fafc;  /* light clean background */
+  color: #1e293b;             /* dark text */
+  line-height: 1.5;
+}
+
+/* ===== IMAGES ===== */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== LINKS ===== */
+a {
+  text-decoration: none;
+}
+
+/* ===== BUTTON RESET ===== */
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* ===== OPTIONAL: SCROLL SMOOTH ===== */
+html {
+  scroll-behavior: smooth;
 }
