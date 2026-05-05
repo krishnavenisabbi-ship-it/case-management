@@ -5,6 +5,10 @@ import heroImage from "../assets/poster.png"; // your poster image
 const Home = () => {
   return (
     <div className="home">
+	 {/* 🔥 TAILWIND TEST */}
+      <div className="bg-red-500 text-white p-5 text-center">
+        TAILWIND TEST
+      </div>
 
       {/* HERO SECTION */}
       <section className="hero pt-[90px] px-4">
