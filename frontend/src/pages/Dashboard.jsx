@@ -399,7 +399,7 @@ if (loading) {
 }
 
 return (
-  <div className="dashboard-shell">
+  <div className="dashboard-shell pt-[80px]">
 
     {/* SIDEBAR */}
     <aside className="dashboard-sidebar">
