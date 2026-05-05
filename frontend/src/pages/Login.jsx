@@ -1,10 +1,12 @@
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import axios from "axios";
 import logo from "../assets/logo.png";
 
 const BASE_URL =
-  import.meta.env.VITE_BACKEND_URL ||"https://case-management-fei4.onrender.com";
-
+  import.meta.env.VITE_BACKEND_URL || "https://case-management-fei4.onrender.com";
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "400532799045-aqoo74q76bms4o0erh379oou3np727b5.apps.googleusercontent.com";
 
 export default function Login() {
   const handleSuccess = async (res) => {
@@ -72,7 +74,12 @@ export default function Login() {
           Sign in to manage cases, uploads, and adjournment updates.
         </p>
 
-        <GoogleLogin onSuccess={handleSuccess} onError={() => console.log("Login Failed")} />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={() => console.log("Login Failed")}
+          />
+        </GoogleOAuthProvider>
       </div>
     </div>
   );
