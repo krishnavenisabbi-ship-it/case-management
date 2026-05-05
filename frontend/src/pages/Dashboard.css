@@ -15,7 +15,13 @@
   --dash-soft-green: #dff5e8;
   --dash-soft-amber: #fce8c7;
 }
+body {
+  margin: 0;
+}
 
+.dashboard-container {
+  margin-top: 70px; /* adjust based on header height */
+}
 .dashboard-shell {
   min-height: 100vh;
   display: grid;

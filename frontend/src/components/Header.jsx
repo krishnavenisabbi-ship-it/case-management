@@ -14,6 +14,7 @@ const Header = () => {
       {/* NAVIGATION */}
       <nav className="nav">
         <Link to="/">Home</Link>
+		 <Link to="/about">About Us</Link>
         <Link to="/features">Features</Link>
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/contact">Contact</Link>
