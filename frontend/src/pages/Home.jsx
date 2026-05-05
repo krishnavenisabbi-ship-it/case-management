@@ -7,8 +7,7 @@ import poster from "../assets/poster.png";   // make sure file exists
 const Home = () => {
   return (
     <>
-      <Header />
-
+    
       <div className="home">
 
         {/* HERO SECTION */}

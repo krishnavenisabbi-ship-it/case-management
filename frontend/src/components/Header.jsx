@@ -14,7 +14,7 @@ const Header = () => {
       {/* NAVIGATION */}
       <nav className="nav">
         <Link to="/">Home</Link>
-		 <Link to="/about">About Us</Link>
+        <Link to="/about">About Us</Link>
         <Link to="/features">Features</Link>
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/contact">Contact</Link>
@@ -22,8 +22,8 @@ const Header = () => {
 
       {/* LOGIN BUTTON */}
       <div className="header-btn">
-        <Link to="/login">
-          <button className="login-btn">Login</button>
+        <Link to="/login" className="login-btn">
+          Login
         </Link>
       </div>
 
